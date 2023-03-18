@@ -550,10 +550,10 @@ class FROLS(Estimators, BaseMSS):
             )
         else:
             model_length = self.n_terms
-
         (self.err, self.pivv, psi) = self.error_reduction_ratio(
             reg_matrix, y, model_length
         )
+        self.psi = psi
 
         tmp_piv = self.pivv[0:model_length]
         if self.basis_function.__class__.__name__ == "Polynomial":
@@ -575,7 +575,7 @@ class FROLS(Estimators, BaseMSS):
                 axis=0,
             )
             self.final_model = self.regressor_code[tmp_piv, :].copy()
-
+        self.psi = psi
         self.theta = getattr(self, self.estimator)(psi, y)
         if self.extended_least_squares is True:
             self.theta = self._unbiased_estimator(
