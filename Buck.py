@@ -90,7 +90,7 @@ model.fit(X=x_train, y=y_train)
 yhat = model.predict(X=x_valid, y=y_valid)
 
 # Definindo o ganho
-gain = -Yo/24
+gain = -8*np.ones(len(Uo)).reshape(-1,1)
 plt.figure(3)
 plt.title('Ganho do Conversor Estático')
 plt.xlabel('$\\bar{u}$')
@@ -124,7 +124,7 @@ result = {'w1': w[0,:],
 print(pd.DataFrame(result))
 
 # Escrevendo os resultados
-model.theta = Theta[0, :].reshape(-1,1)
+model.theta = Theta[7, :].reshape(-1,1)
 yhat = model.predict(X=x_valid, y=y_valid)
 rrse = root_relative_squared_error(y_valid, yhat)
 r = pd.DataFrame(
@@ -142,6 +142,7 @@ plt.plot(Uo, gain, 'g', linewidth=3, label='Ganho do CC-Buck')
 plt.plot(Uo, HR.dot(model.theta), 'r', linewidth=3, label='Ganho do modelo NARX')
 plt.xlabel('$\\bar{u}$')
 plt.ylabel('$\\bar{g}$')
+plt.ylim(-10, 0)
 plt.legend()
 plt.show()
 
