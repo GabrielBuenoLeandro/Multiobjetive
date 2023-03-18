@@ -485,10 +485,10 @@ class FROLS(
             )
         else:
             model_length = self.n_terms
-
         (self.err, self.pivv, psi) = self.error_reduction_ratio(
             reg_matrix, y, model_length
         )
+        self.psi = psi
 
         tmp_piv = self.pivv[0:model_length]
         if self.basis_function.__class__.__name__ == "Polynomial":
@@ -510,7 +510,7 @@ class FROLS(
                 axis=0,
             )
             self.final_model = self.regressor_code[tmp_piv, :].copy()
-
+        self.psi = psi
         self.theta = getattr(self, self.estimator)(psi, y)
         # self.max_lag = self._get_max_lag_from_model_code(self.final_model)
         if self._extended_least_squares is True:

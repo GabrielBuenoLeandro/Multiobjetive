@@ -90,7 +90,7 @@ model.fit(X=x_train, y=y_train)
 yhat = model.predict(X=x_valid, y=y_valid)
 
 # Definindo o ganho
-gain = -24/3
+gain = -Yo/24
 plt.figure(3)
 plt.title('Ganho do Conversor Estático')
 plt.xlabel('$\\bar{u}$')
