@@ -124,7 +124,7 @@ result = {'w1': w[0,:],
 print(pd.DataFrame(result))
 
 # Escrevendo os resultados
-model.theta = Theta[7, :].reshape(-1,1)
+model.theta = Theta[189, :].reshape(-1,1)
 yhat = model.predict(X=x_valid, y=y_valid)
 rrse = root_relative_squared_error(y_valid, yhat)
 r = pd.DataFrame(
