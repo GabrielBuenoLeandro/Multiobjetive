@@ -195,5 +195,5 @@ class IM(FROLS):
             if self.Static_Function == True:
                 J[w, i] = (((self.Y_static)-(QR.dot(Theta))).T).dot((self.Y_static)-(QR.dot(Theta)))
         for i in range(0, np.shape(W)[1]):
-            E[i] = np.linalg.norm(J[:, i])
-        return J, W, E, Array_theta, HR, QR
+            E[i] = np.linalg.norm(J[:, i]/np.max(J))
+        return J/np.max(J), W, E, Array_theta, HR, QR
