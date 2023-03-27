@@ -488,6 +488,7 @@ class FROLS(
         (self.err, self.pivv, psi) = self.error_reduction_ratio(
             reg_matrix, y, model_length
         )
+        print(psi)
         self.psi = psi
 
         tmp_piv = self.pivv[0:model_length]
