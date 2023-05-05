@@ -3,7 +3,12 @@ from sysidentpy.model_structure_selection import FROLS
 
 
 class IM(FROLS):
-    """Multi-purpose estimation of parameters
+    """Multiobjective parameter estimation using technique proposed by Nepomuceno et. al.
+
+    Reference:
+    NEPOMUCENO, E. G.; TAKAHASHI, R. H. C. ; AGUIRRE, L. A. . Multiobjective parameter
+    estimation for nonlinear systems: Affine information and least-squares formulation.
+    International Journal of Control (Print), v. 80, p. 863-871, 2007.
 
     Parameters
     ----------
