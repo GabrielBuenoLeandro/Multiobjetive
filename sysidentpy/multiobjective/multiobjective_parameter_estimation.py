@@ -38,20 +38,21 @@ class IM(FROLS):
         Matrix with weights.
     """
 
-    def __init__(self,
-                 static_gain=True,
-                 static_function=True,
-                 y_static=np.zeros(1),
-                 x_static=np.zeros(1),
-                 gain=np.zeros(1),
-                 y_train=np.zeros(1),
-                 psi=np.zeros((1, 1)),
-                 n_inputs=1,
-                 non_degree=2,
-                 model_type='NARMAX',
-                 final_model=np.zeros((1, 1)),
-                 w=np.zeros((1, 1))
-                 ):
+    def __init__(
+        self,
+        static_gain=True,
+        static_function=True,
+        y_static=np.zeros(1),
+        x_static=np.zeros(1),
+        gain=np.zeros(1),
+        y_train=np.zeros(1),
+        psi=np.zeros((1, 1)),
+        n_inputs=1,
+        non_degree=2,
+        model_type="NARMAX",
+        final_model=np.zeros((1, 1)),
+        w=np.zeros((1, 1)),
+    ):
         self.static_gain = static_gain
         self.static_function = static_function
         self.psi = psi
@@ -70,9 +71,10 @@ class IM(FROLS):
         N = []
         for i in range(0, self._n_inputs):
             N.append(1)
-        qit = self.regressor_space(
-            self.non_degree, N, 1, self._n_inputs, self.model_type
-        ) // 1000
+        qit = (
+            self.regressor_space(self.non_degree, N, 1, self._n_inputs, self.model_type)
+            // 1000
+        )
         # (41, 50) -> Gerando a matriz de mapeamento linear
         model = self.final_model // 1000
         R = np.zeros((np.shape(qit)[0], np.shape(model)[0]))
@@ -117,14 +119,18 @@ class IM(FROLS):
                 if self.y_static[i, 0] == 0:
                     H[i, j] = 0
                 else:
-                    H[i, j] = self.gain[i] * qit[j, 0] * self.y_static[i, 0] \
-                              ** (qit[j, 0] - 1)
+                    H[i, j] = (
+                        self.gain[i]
+                        * qit[j, 0]
+                        * self.y_static[i, 0] ** (qit[j, 0] - 1)
+                    )
                 for k in range(0, self._n_inputs):
                     if self.x_static[i, k] == 0:
                         G[i, j] = 0
                     else:
-                        G[i, j] = qit[j, 1 + k] * self.x_static[i, k] \
-                                  ** (qit[j, 1 + k] - 1)
+                        G[i, j] = qit[j, 1 + k] * self.x_static[i, k] ** (
+                            qit[j, 1 + k] - 1
+                        )
         return (G + H).dot(R)
 
     def weights(self):
@@ -181,8 +187,7 @@ class IM(FROLS):
             if self.static_function == True:
                 QR = self.static_function()
                 part1 = w[w, i] * (QR.T).dot(QR) + part1
-                part2 = part2 + (w[w, i] * (QR.T).dot(self.y_static)) \
-                    .reshape(-1, 1)
+                part2 = part2 + (w[w, i] * (QR.T).dot(self.y_static)).reshape(-1, 1)
                 w = w + 1
             if self.static_function == True:
                 HR = self.static_gain()
@@ -193,15 +198,19 @@ class IM(FROLS):
                 J = np.zeros((w, np.shape(w)[1]))
             Theta = ((np.linalg.inv(part1)).dot(part2)).reshape(-1, 1)
             Array_theta[i, :] = Theta.T
-            J[0, i] = (((self.y_train) - (self.psi.dot(Theta))).T).dot((self.y_train) \
-                                                                       - (self.psi.dot(Theta)))
+            J[0, i] = (((self.y_train) - (self.psi.dot(Theta))).T).dot(
+                (self.y_train) - (self.psi.dot(Theta))
+            )
             w = 1
             if self.static_gain == True:
-                J[w, i] = (((self.gain) - (HR.dot(Theta))).T).dot((self.gain) \
-                                                                  - (HR.dot(Theta)))
+                J[w, i] = (((self.gain) - (HR.dot(Theta))).T).dot(
+                    (self.gain) - (HR.dot(Theta))
+                )
                 w = w + 1
             if self.static_function == True:
-                J[w, i] = (((self.y_static) - (QR.dot(Theta))).T).dot((self.y_static) - (QR.dot(Theta)))
+                J[w, i] = (((self.y_static) - (QR.dot(Theta))).T).dot(
+                    (self.y_static) - (QR.dot(Theta))
+                )
         for i in range(0, np.shape(w)[1]):
             E[i] = np.linalg.norm(J[:, i] / np.max(J))
         return J / np.max(J), w, E, Array_theta, HR, QR
