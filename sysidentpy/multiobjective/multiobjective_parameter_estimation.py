@@ -12,19 +12,19 @@ class IM(FROLS):
 
     Parameters
     ----------
-    Static_Gain : bool, default=True
+    static_gain : bool, default=True
         Presence of data referring to static gain.
-    Static_Function : bool, default=True
+    static_function : bool, default=True
         Presence of data regarding static function.
-    Y_static : array-like of shape = n_samples_static_function, default = ([0])
+    y_static : array-like of shape = n_samples_static_function, default = ([0])
         Output of static function.
-    X_static : array-like of shape = n_samples_static_function, default = ([0])
+    x_static : array-like of shape = n_samples_static_function, default = ([0])
         Static function input.
-    Gain : array-like of shape = n_samples_static_gain, default = ([0])
+    gain : array-like of shape = n_samples_static_gain, default = ([0])
         Static gain input.
     y_train : array-like of shape = n_samples, defalult = ([0])
         The target data used in the identification process.
-    PSI : ndarray of floats, default = ([[0],[0]])
+    psi : ndarray of floats, default = ([[0],[0]])
         Matrix of static regressors.
     n_inputs : int, default=1
         Number of entries.
@@ -38,32 +38,32 @@ class IM(FROLS):
         Matrix with weights.
     """
     def __init__(self,
-                 Static_Gain=True,
-                 Static_Function=True,
-                 Y_static=np.zeros(1),
-                 X_static=np.zeros(1),
-                 Gain=np.zeros(1),
+                 static_gain=True,
+                 static_function=True,
+                 y_static=np.zeros(1),
+                 x_static=np.zeros(1),
+                 gain=np.zeros(1),
                  y_train=np.zeros(1),
-                 PSI=np.zeros((1, 1)),
+                 psi=np.zeros((1, 1)),
                  n_inputs=1,
                  non_degree=2,
                  model_type='NARMAX',
                  final_model=np.zeros((1, 1)),
-                 W=np.zeros((1, 1))
+                 w=np.zeros((1, 1))
                  ):
-        self.Static_Gain = Static_Gain
-        self.Static_Function = Static_Function
-        self.psi = PSI
+        self.Static_Gain = static_gain
+        self.Static_Function = static_function
+        self.psi = psi
         self._n_inputs = n_inputs
         self.non_degree = non_degree
         self.model_type = model_type
-        self.Y_static = Y_static
-        self.X_static = X_static
+        self.Y_static = y_static
+        self.X_static = x_static
         self.final_model = final_model
-        self.gain = Gain
+        self.gain = gain
         self.y_train = y_train
-        self.W = W
-    def R_qit(self):
+        self.w = w
+    def r_qit(self):
         """Assembly of the R matrix and ordering of the q_it."""
         N = []
         for i in range(0, self._n_inputs):
@@ -88,7 +88,7 @@ class IM(FROLS):
                
     def static_function(self):
         """Matrix of static regressors."""
-        R, qit = self.R_qit()
+        R, qit = self.r_qit()
         a = np.shape(qit)[0]
         N_aux = np.zeros((a, int(np.max(qit))))
         for k in range(0, int(np.max(qit))):
@@ -107,7 +107,7 @@ class IM(FROLS):
 
     def static_gain(self):
         """Matrix of static regressors referring to derivative."""
-        R, qit = self.R_qit()
+        R, qit = self.r_qit()
         H = np.zeros((len(self.Y_static), len(qit)))
         G = np.zeros((len(self.Y_static), len(qit)))
         for i in range(0, len(self.Y_static)):
@@ -139,22 +139,22 @@ class IM(FROLS):
                     a2.append(w2[j])
                     a3.append(1 - (w1[i]+w2[j]))
         if self.Static_Gain != False and self.Static_Function != False:
-            W = np.zeros((3, len(a1)))
-            W[0, :] = a1
-            W[1, :] = a2
-            W[2, :] = a3
+            w = np.zeros((3, len(a1)))
+            w[0, :] = a1
+            w[1, :] = a2
+            w[2, :] = a3
         else:
-            W = np.zeros((2, len(a1)))
-            W[0, :] = a2
-            W[1, :] = np.ones(len(a1))-a2
-        return W
+            w = np.zeros((2, len(a1)))
+            w[0, :] = a2
+            w[1, :] = np.ones(len(a1))-a2
+        return w
     def multio(self):
         """Calculation of parameters via multi-objective techniques.
         Returns
         -------
         J : ndarray
             Matrix referring to the objectives.
-        W : ndarray
+        w : ndarray
             Matrix referring to weights.
         E : ndarray
             Matrix of the Euclidean norm.
@@ -165,29 +165,29 @@ class IM(FROLS):
         QR : ndarray
             Q matrix multiplied by R.
         """
-        if sum(self.W[:, 0]) != 1:
-            W = self.weights()
+        if sum(self.w[:, 0]) != 1:
+            w = self.weights()
         else:
-            W = self.W
-        E = np.zeros(np.shape(W)[1])
-        Array_theta = np.zeros((np.shape(W)[1], np.shape(self.final_model)[0]))
-        for i in range(0, np.shape(W)[1]):
-            part1 = W[0, i]*(self.psi).T.dot(self.psi)
-            part2 = W[0, i]*(self.psi.T).dot(self.y_train)
+            w = self.w
+        E = np.zeros(np.shape(w)[1])
+        Array_theta = np.zeros((np.shape(w)[1], np.shape(self.final_model)[0]))
+        for i in range(0, np.shape(w)[1]):
+            part1 = w[0, i]*(self.psi).T.dot(self.psi)
+            part2 = w[0, i]*(self.psi.T).dot(self.y_train)
             w = 1
             if self.Static_Function == True:
                 QR = self.static_function()
-                part1 = W[w, i]*(QR.T).dot(QR) + part1
-                part2 = part2 + (W[w, i]*(QR.T).dot(self.Y_static))\
+                part1 = w[w, i]*(QR.T).dot(QR) + part1
+                part2 = part2 + (w[w, i]*(QR.T).dot(self.Y_static))\
                     .reshape(-1,1)
                 w = w + 1
             if self.Static_Function == True:
                 HR = self.static_gain()
-                part1 = W[w, i]*(HR.T).dot(HR) + part1
-                part2 = part2 + (W[w, i]*(HR.T).dot(self.gain)).reshape(-1,1)
+                part1 = w[w, i]*(HR.T).dot(HR) + part1
+                part2 = part2 + (w[w, i]*(HR.T).dot(self.gain)).reshape(-1,1)
                 w = w+1
             if i == 0:
-                J = np.zeros((w, np.shape(W)[1]))
+                J = np.zeros((w, np.shape(w)[1]))
             Theta = ((np.linalg.inv(part1)).dot(part2)).reshape(-1, 1)
             Array_theta[i, :] = Theta.T
             J[0, i] = (((self.y_train)-(self.psi.dot(Theta))).T).dot((self.y_train)\
@@ -199,6 +199,6 @@ class IM(FROLS):
                 w = w+1
             if self.Static_Function == True:
                 J[w, i] = (((self.Y_static)-(QR.dot(Theta))).T).dot((self.Y_static)-(QR.dot(Theta)))
-        for i in range(0, np.shape(W)[1]):
+        for i in range(0, np.shape(w)[1]):
             E[i] = np.linalg.norm(J[:, i]/np.max(J))
-        return J/np.max(J), W, E, Array_theta, HR, QR
+        return J/np.max(J), w, E, Array_theta, HR, QR
