@@ -71,90 +71,90 @@ class IM(FROLS):
         N = []
         for i in range(0, self._n_inputs):
             N.append(1)
-        qit = (
+        q_it = (
             self.regressor_space(self.non_degree, N, 1, self._n_inputs, self.model_type)
             // 1000
         )
         # (41, 50) -> Gerando a matriz de mapeamento linear
         model = self.final_model // 1000
-        R = np.zeros((np.shape(qit)[0], np.shape(model)[0]))
+        R = np.zeros((np.shape(q_it)[0], np.shape(model)[0]))
         b = []
-        for i in range(0, np.shape(qit)[0]):
+        for i in range(0, np.shape(q_it)[0]):
             for j in range(0, np.shape(model)[0]):
-                if (qit[i, :] == model[j, :]).all():
+                if (q_it[i, :] == model[j, :]).all():
                     R[i, j] = 1
             if sum(R[i, :]) == 0:
                 b.append(i)
         R = np.delete(R, b, axis=0)
         # (52, 67) -> é montada a matriz dos regressores estáticos
-        qit = np.delete(qit, b, axis=0)
-        return R, qit
+        q_it = np.delete(q_it, b, axis=0)
+        return R, q_it
 
     def static_function(self):
         """Matrix of static regressors."""
-        R, qit = self.r_qit()
-        a = np.shape(qit)[0]
-        N_aux = np.zeros((a, int(np.max(qit))))
-        for k in range(0, int(np.max(qit))):
-            for i in range(0, np.shape(qit)[0]):
-                for j in range(0, np.shape(qit)[1]):
-                    if k + 1 == qit[i, j]:
-                        N_aux[i, k] = 1 + N_aux[i, k]
-        qit = N_aux
-        Q = np.zeros((len(self.y_static), len(qit)))
+        R, q_it = self.r_qit()
+        a = np.shape(q_it)[0]
+        n_aux = np.zeros((a, int(np.max(q_it))))
+        for k in range(0, int(np.max(q_it))):
+            for i in range(0, np.shape(q_it)[0]):
+                for j in range(0, np.shape(q_it)[1]):
+                    if k + 1 == q_it[i, j]:
+                        n_aux[i, k] = 1 + n_aux[i, k]
+        q_it = n_aux
+        Q = np.zeros((len(self.y_static), len(q_it)))
         for i in range(0, len(self.y_static)):
-            for j in range(0, len(qit)):
-                Q[i, j] = self.y_static[i, 0] ** (qit[j, 0])
+            for j in range(0, len(q_it)):
+                Q[i, j] = self.y_static[i, 0] ** (q_it[j, 0])
                 for k in range(0, self._n_inputs):
-                    Q[i, j] = Q[i, j] * self.x_static[i, k] ** (qit[j, 1 + k])
+                    Q[i, j] = Q[i, j] * self.x_static[i, k] ** (q_it[j, 1 + k])
         return Q.dot(R)
 
     def static_gain(self):
         """Matrix of static regressors referring to derivative."""
-        R, qit = self.r_qit()
-        H = np.zeros((len(self.y_static), len(qit)))
-        G = np.zeros((len(self.y_static), len(qit)))
+        R, q_it = self.r_qit()
+        H = np.zeros((len(self.y_static), len(q_it)))
+        G = np.zeros((len(self.y_static), len(q_it)))
         for i in range(0, len(self.y_static)):
-            for j in range(1, len(qit)):
+            for j in range(1, len(q_it)):
                 if self.y_static[i, 0] == 0:
                     H[i, j] = 0
                 else:
                     H[i, j] = (
                         self.gain[i]
-                        * qit[j, 0]
-                        * self.y_static[i, 0] ** (qit[j, 0] - 1)
+                        * q_it[j, 0]
+                        * self.y_static[i, 0] ** (q_it[j, 0] - 1)
                     )
                 for k in range(0, self._n_inputs):
                     if self.x_static[i, k] == 0:
                         G[i, j] = 0
                     else:
-                        G[i, j] = qit[j, 1 + k] * self.x_static[i, k] ** (
-                            qit[j, 1 + k] - 1
+                        G[i, j] = q_it[j, 1 + k] * self.x_static[i, k] ** (
+                            q_it[j, 1 + k] - 1
                         )
         return (G + H).dot(R)
 
     def weights(self):
-        """Weights givenwith each goal."""
-        w1 = np.arange(0.01, 1.00, 0.05)
-        w2 = np.arange(1.00, 0.01, -0.05)
-        a1 = []
-        a2 = []
-        a3 = []
-        for i in range(0, len(w1)):
-            for j in range(0, len(w2)):
-                if w1[i] + w2[j] <= 1:
-                    a1.append(w1[i])
-                    a2.append(w2[j])
-                    a3.append(1 - (w1[i] + w2[j]))
+        """Weights givenwith each objective."""
+        w_1 = np.arange(0.01, 1.00, 0.05)
+        w_2 = np.arange(1.00, 0.01, -0.05)
+        a_1 = []
+        a_2 = []
+        a_3 = []
+        for i in range(0, len(w_1)):
+            for j in range(0, len(w_2)):
+                if w_1[i] + w_2[j] <= 1:
+                    a_1.append(w_1[i])
+                    a_2.append(w_2[j])
+                    a_3.append(1 - (w_1[i] + w_2[j]))
         if self.static_gain != False and self.static_function != False:
-            w = np.zeros((3, len(a1)))
-            w[0, :] = a1
-            w[1, :] = a2
-            w[2, :] = a3
+            w = np.zeros((3, len(a_1)))
+            w[0, :] = a_1
+            w[1, :] = a_2
+            w[2, :] = a_3
         else:
-            w = np.zeros((2, len(a1)))
-            w[0, :] = a2
-            w[1, :] = np.ones(len(a1)) - a2
+            w = np.zeros((2, len(a_1)))
+            w[0, :] = a_2
+            w[1, :] = np.ones(len(a_1)) - a_2
         return w
 
     def multio(self):
@@ -167,7 +167,7 @@ class IM(FROLS):
             Matrix referring to weights.
         E : ndarray
             Matrix of the Euclidean norm.
-        Array_theta : ndarray
+        array_theta : ndarray
             Matrix with parameters for each weight.
         HR : ndarray
             H matrix multiplied by R.
@@ -179,38 +179,38 @@ class IM(FROLS):
         else:
             w = self.w
         E = np.zeros(np.shape(w)[1])
-        Array_theta = np.zeros((np.shape(w)[1], np.shape(self.final_model)[0]))
+        array_theta = np.zeros((np.shape(w)[1], np.shape(self.final_model)[0]))
         for i in range(0, np.shape(w)[1]):
-            part1 = w[0, i] * (self.psi).T.dot(self.psi)
-            part2 = w[0, i] * (self.psi.T).dot(self.y_train)
+            part_1 = w[0, i] * (self.psi).T.dot(self.psi)
+            part_2 = w[0, i] * (self.psi.T).dot(self.y_train)
             w = 1
             if self.static_function == True:
                 QR = self.static_function()
-                part1 = w[w, i] * (QR.T).dot(QR) + part1
-                part2 = part2 + (w[w, i] * (QR.T).dot(self.y_static)).reshape(-1, 1)
+                part_1 = w[w, i] * (QR.T).dot(QR) + part_1
+                part_2 = part_2 + (w[w, i] * (QR.T).dot(self.y_static)).reshape(-1, 1)
                 w = w + 1
             if self.static_function == True:
                 HR = self.static_gain()
-                part1 = w[w, i] * (HR.T).dot(HR) + part1
-                part2 = part2 + (w[w, i] * (HR.T).dot(self.gain)).reshape(-1, 1)
+                part_1 = w[w, i] * (HR.T).dot(HR) + part_1
+                part_2 = part_2 + (w[w, i] * (HR.T).dot(self.gain)).reshape(-1, 1)
                 w = w + 1
             if i == 0:
                 J = np.zeros((w, np.shape(w)[1]))
-            Theta = ((np.linalg.inv(part1)).dot(part2)).reshape(-1, 1)
-            Array_theta[i, :] = Theta.T
-            J[0, i] = (((self.y_train) - (self.psi.dot(Theta))).T).dot(
-                (self.y_train) - (self.psi.dot(Theta))
+            theta = ((np.linalg.inv(part_1)).dot(part_2)).reshape(-1, 1)
+            array_theta[i, :] = theta.T
+            J[0, i] = (((self.y_train) - (self.psi.dot(theta))).T).dot(
+                (self.y_train) - (self.psi.dot(theta))
             )
             w = 1
             if self.static_gain == True:
-                J[w, i] = (((self.gain) - (HR.dot(Theta))).T).dot(
-                    (self.gain) - (HR.dot(Theta))
+                J[w, i] = (((self.gain) - (HR.dot(theta))).T).dot(
+                    (self.gain) - (HR.dot(theta))
                 )
                 w = w + 1
             if self.static_function == True:
-                J[w, i] = (((self.y_static) - (QR.dot(Theta))).T).dot(
-                    (self.y_static) - (QR.dot(Theta))
+                J[w, i] = (((self.y_static) - (QR.dot(theta))).T).dot(
+                    (self.y_static) - (QR.dot(theta))
                 )
         for i in range(0, np.shape(w)[1]):
             E[i] = np.linalg.norm(J[:, i] / np.max(J))
-        return J / np.max(J), w, E, Array_theta, HR, QR
+        return J / np.max(J), w, E, array_theta, HR, QR
