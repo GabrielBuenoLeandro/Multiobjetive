@@ -12,9 +12,9 @@ class IM(FROLS):
 
     Parameters
     ----------
-    static_gain : bool, default=True
+    sg : bool, default=True
         Presence of data referring to static gain.
-    static_function : bool, default=True
+    sf : bool, default=True
         Presence of data regarding static function.
     y_static : array-like of shape = n_samples_static_function, default = ([0])
         Output of static function.
