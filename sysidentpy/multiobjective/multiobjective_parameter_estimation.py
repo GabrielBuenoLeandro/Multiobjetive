@@ -223,14 +223,14 @@ class IM(FROLS):
                 part_1 = w[w, i] * (QR.T).dot(QR) + part_1
                 # w[0, i][psi^t psi] + w[w, i][(QR)^t QR]
                 part_2 = part_2 + (w[w, i] * (QR.T).dot(self.y_static)).reshape(-1, 1)
-                # [psi^t y_{ytrain]}] + w[w, i][(QR)^t y_{static}]
+                # w[0,i][psi^t y_{ytrain]}] + w[w, i][(QR)^t y_{static}]
                 w = w + 1
             if self.static_function == True:
                 HR = self.static_gain()
                 part_1 = w[w, i] * (HR.T).dot(HR) + part_1
                 # w[0, i][psi^t psi] + w[w, i][(QR)^t QR] + w[w, i][(HR)^t HR]
                 part_2 = part_2 + (w[w, i] * (HR.T).dot(self.gain)).reshape(-1, 1)
-                # [psi^t y_{ytrain]}] + w[w, i][(QR)^t y_{static}] + w[w, i][(HR)^t Gain]
+                # w[0,i][psi^t y_{ytrain]}] + w[w, i][(QR)^t y_{static}] + w[w, i][(HR)^t Gain]
                 w = w + 1
             if i == 0:
                 J = np.zeros((w, np.shape(w)[1]))
