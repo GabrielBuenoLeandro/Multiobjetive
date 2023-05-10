@@ -103,7 +103,7 @@ class IM(FROLS):
 
         Returns:
             Q.dot(R) : ndarray of floats
-                       Returns the multiplication of the matrix of static regressors (Q) and linear mapping (R).
+                Returns the multiplication of the matrix of static regressors (Q) and linear mapping (R).
         """
         R, q_it = self.r_qit()
         a = np.shape(q_it)[0]
@@ -130,8 +130,8 @@ class IM(FROLS):
         
         Returns:
         (G+H).dot(R): ndarray of floats
-                      Matrix of static regressors for the derivative (gain) multiplied 
-                      the matrix of the linear mapping R.
+            Matrix of static regressors for the derivative (gain) multiplied 
+            he matrix of the linear mapping R.
         """
         R, q_it = self.r_qit()
         H = np.zeros((len(self.y_static), len(q_it)))
