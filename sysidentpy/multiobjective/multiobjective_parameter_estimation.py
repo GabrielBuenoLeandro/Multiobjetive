@@ -76,7 +76,7 @@ class IM(FROLS):
         """
         N = []
         for i in range(0, self._n_inputs):
-            N.append(1)
+            N.append(1) # Creation of a list of 1, being the degree of nonlinearity referring to the entries.
         qit = self.regressor_space(
             self.non_degree, N, 1, self._n_inputs, self.model_type
         )//1000
