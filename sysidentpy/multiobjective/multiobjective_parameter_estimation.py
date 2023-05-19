@@ -1,5 +1,6 @@
 import numpy as np
 from sysidentpy.model_structure_selection import FROLS
+from sysidentpy.basis_function import Polynomial
 
 
 class IM(FROLS):
@@ -54,7 +55,7 @@ class IM(FROLS):
         self.sg = sg
         self.sf = sf
         self.psi = psi
-        self._n_inputs = n_inputs
+        self.n_inputs = n_inputs
         self.non_degree = non_degree
         self.model_type = model_type
         self.Y_static = y_static
@@ -63,6 +64,9 @@ class IM(FROLS):
         self.gain = gain
         self.y_train = y_train
         self.W = W
+        self.basis_function = Polynomial(degree=non_degree)
+        super().__init__(self)
+
     def R_qit(self):
         """Assembly of the matrix of the linear mapping R, where to locate the terms uses the regressor-space method
 
@@ -75,11 +79,14 @@ class IM(FROLS):
             and will later be used in the making of the static regressor matrix (Q).
         """
         N = []
-        for i in range(0, self._n_inputs):
+        for i in range(0, self.n_inputs):
             N.append(1) # Creation of a list of 1, being the degree of nonlinearity referring to the entries.
+        """"
         qit = self.regressor_space(
-            self.non_degree, N, 1, self._n_inputs, self.model_type
+            self.non_degree, N, 1, self.n_inputs, self.model_type
         )//1000
+        """
+        qit = self.regressor_space(self.n_inputs)//1000
         model = self.final_model//1000
         R = np.zeros((np.shape(qit)[0], np.shape(model)[0]))
         b = []
@@ -114,7 +121,7 @@ class IM(FROLS):
         for i in range(0, len(self.Y_static)):
             for j in range(0, len(qit)):
                 Q[i, j] = self.Y_static[i, 0]**(qit[j, 0])
-                for k in range(0, self._n_inputs):
+                for k in range(0, self.n_inputs):
                     Q[i, j] = Q[i, j]*self.X_static[i, k]**(qit[j, 1+k])
         return Q.dot(R) 
 
@@ -137,7 +144,7 @@ class IM(FROLS):
                 else:
                     H[i, j] = self.gain[i]*qit[j, 0]*self.Y_static[i, 0]\
                         **(qit[j, 0]-1)
-                for k in range(0, self._n_inputs):
+                for k in range(0, self.n_inputs):
                     if self.X_static[i, k] == 0:
                         G[i, j] = 0
                     else:
