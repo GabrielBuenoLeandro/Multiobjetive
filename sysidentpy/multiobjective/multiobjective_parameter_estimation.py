@@ -81,7 +81,6 @@ class IM(FROLS):
         """
         model = self.final_model//1000
         out = np.max(model)
-        M = np.zeros((out**(out+1),out))
         N = np.arange(0, out+1)
         b = (product(N, repeat=out))
         Possibilidades = [] 
