@@ -1,6 +1,8 @@
 import numpy as np
 from sysidentpy.model_structure_selection import FROLS
 from sysidentpy.basis_function import Polynomial
+from itertools import product
+#from sysidentpy import basis_function
 
 
 class IM(FROLS):
@@ -50,7 +52,7 @@ class IM(FROLS):
                  non_degree=2,
                  model_type='NARMAX',
                  final_model=np.zeros((1, 1)),
-                 W=np.zeros((1, 1))
+                 W=np.zeros((1, 1)),
                  ):
         self.sg = sg
         self.sf = sf
@@ -64,8 +66,7 @@ class IM(FROLS):
         self.gain = gain
         self.y_train = y_train
         self.W = W
-        self.basis_function = Polynomial(degree=non_degree)
-        super().__init__(self)
+        #self.basis_function = Polynomial(degree=non_degree)
 
     def R_qit(self):
         """Assembly of the matrix of the linear mapping R, where to locate the terms uses the regressor-space method
@@ -78,16 +79,15 @@ class IM(FROLS):
             Row matrix that helps in locating the terms of the linear mapping matrix 
             and will later be used in the making of the static regressor matrix (Q).
         """
-        N = []
-        for i in range(0, self.n_inputs):
-            N.append(1) # Creation of a list of 1, being the degree of nonlinearity referring to the entries.
-        """"
-        qit = self.regressor_space(
-            self.non_degree, N, 1, self.n_inputs, self.model_type
-        )//1000
-        """
-        qit = self.regressor_space(self.n_inputs)//1000
         model = self.final_model//1000
+        out = np.max(model)
+        M = np.zeros((out**(out+1),out))
+        N = np.arange(0, out+1)
+        b = (product(N, repeat=out))
+        Possibilidades = [] 
+        for i in b:
+            Possibilidades.append(i)
+        qit = (np.array(Possibilidades))
         R = np.zeros((np.shape(qit)[0], np.shape(model)[0]))
         b = []
         for i in range(0, np.shape(qit)[0]):
