@@ -1,7 +1,8 @@
 import numpy as np
 from sysidentpy.model_structure_selection import FROLS
 from sysidentpy.basis_function import Polynomial
-from itertools import product
+from sysidentpy.narmax_base import RegressorDictionary
+
 #from sysidentpy import basis_function
 
 
@@ -79,15 +80,14 @@ class IM(FROLS):
             Row matrix that helps in locating the terms of the linear mapping matrix 
             and will later be used in the making of the static regressor matrix (Q).
         """
-        # 83 to 90 => Construction of the generic qit matrix.
+        # 83 to 89 => Construction of the generic qit matrix.
+        xlag = []
+        for i in range(0, self.n_inputs):
+            xlag.append(1)
+        object_qit = RegressorDictionary(xlag=xlag, ylag=[1])
+        # With xlag and ylag equal to 1 there is no repetition of terms, being ideal for qit assembly.
+        qit = object_qit.regressor_space(n_inputs=self.n_inputs)//1000
         model = self.final_model//1000
-        out = np.max(model)
-        N = np.arange(0, out+1)
-        b = (product(N, repeat=out))
-        possibilities = [] 
-        for i in b:
-            possibilities.append(i)
-        qit = (np.array(possibilities))
         # 92 to 97 => Construction of the generic R matrix.
         R = np.zeros((np.shape(qit)[0], np.shape(model)[0]))
         b = []
