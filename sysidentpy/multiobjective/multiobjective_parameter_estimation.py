@@ -79,6 +79,7 @@ class IM(FROLS):
             Row matrix that helps in locating the terms of the linear mapping matrix 
             and will later be used in the making of the static regressor matrix (Q).
         """
+        # 83 to 90 => Construction of the generic qit matrix.
         model = self.final_model//1000
         out = np.max(model)
         N = np.arange(0, out+1)
@@ -87,6 +88,7 @@ class IM(FROLS):
         for i in b:
             Possibilidades.append(i)
         qit = (np.array(Possibilidades))
+        # 92 to 97 => Construction of the generic R matrix.
         R = np.zeros((np.shape(qit)[0], np.shape(model)[0]))
         b = []
         for i in range(0, np.shape(qit)[0]):
@@ -94,9 +96,9 @@ class IM(FROLS):
                 if (qit[i, :] == model[j, :]).all():
                     R[i, j] = 1
             if sum(R[i, :]) == 0:
-                b.append(i)
-        R = np.delete(R, b, axis=0)
-        qit = np.delete(qit, b, axis=0)
+                b.append(i) # Identification of null rows of the R matrix.
+        R = np.delete(R, b, axis=0) # Eliminating the null rows from the generic R matrix.
+        qit = np.delete(qit, b, axis=0) # Eliminating the null rows from the generic qit matrix.
         return R, qit
                
     def static_function(self):
@@ -108,6 +110,8 @@ class IM(FROLS):
             Returns the multiplication of the matrix of static regressors (Q) and linear mapping (R).
         """
         R, qit = self.R_qit()
+        #  115 to 121 => Converting the qit into a matrix of exponents, where the first column indicates the output, 
+        # the second column the first input, the third column the second input and so on.
         a = np.shape(qit)[0]
         N_aux = np.zeros((a, int(np.max(qit))))
         for k in range(0, int(np.max(qit))):
@@ -116,6 +120,7 @@ class IM(FROLS):
                     if k + 1 == qit[i, j]:
                         N_aux[i, k] = 1 + N_aux[i, k]
         qit = N_aux
+        # 123 to 129 => Assembly of the matrix Q.
         Q = np.zeros((len(self.Y_static), len(qit)))
         for i in range(0, len(self.Y_static)):
             for j in range(0, len(qit)):
@@ -134,6 +139,7 @@ class IM(FROLS):
             he matrix of the linear mapping R.
         """
         R, qit = self.R_qit()
+        # 142 to 157 => Construction of the matrix H and G (Static gain).
         H = np.zeros((len(self.Y_static), len(qit)))
         G = np.zeros((len(self.Y_static), len(qit)))
         for i in range(0, len(self.Y_static)):
@@ -197,12 +203,14 @@ class IM(FROLS):
         QR : ndarray
             Q matrix multiplied by R.
         """
+        # 206 to 210 => Checking if the weights add up to 1.
         if sum(self.W[:, 0]) != 1:
             W = self.weights()
         else:
             W = self.W
         E = np.zeros(np.shape(W)[1])
         Array_theta = np.zeros((np.shape(W)[1], np.shape(self.final_model)[0]))
+        #  214 to 241 => Calculation of the Parameters as a result of the input data.
         for i in range(0, np.shape(W)[1]):
             part1 = W[0, i]*(self.psi).T.dot(self.psi)
             part2 = W[0, i]*(self.psi.T).dot(self.y_train)
@@ -232,5 +240,5 @@ class IM(FROLS):
             if self.sf == True:
                 J[w, i] = (((self.Y_static)-(QR.dot(Theta))).T).dot((self.Y_static)-(QR.dot(Theta)))
         for i in range(0, np.shape(W)[1]):
-            E[i] = np.linalg.norm(J[:, i]/np.max(J))
+            E[i] = np.linalg.norm(J[:, i]/np.max(J)) # Normalizing quadratic errors.
         return J/np.max(J), W, E, Array_theta, HR, QR
