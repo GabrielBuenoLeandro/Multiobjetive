@@ -84,10 +84,10 @@ class IM(FROLS):
         out = np.max(model)
         N = np.arange(0, out+1)
         b = (product(N, repeat=out))
-        Possibilidades = [] 
+        possibilities = [] 
         for i in b:
-            Possibilidades.append(i)
-        qit = (np.array(Possibilidades))
+            possibilities.append(i)
+        qit = (np.array(possibilities))
         # 92 to 97 => Construction of the generic R matrix.
         R = np.zeros((np.shape(qit)[0], np.shape(model)[0]))
         b = []
