@@ -80,13 +80,20 @@ class IM(FROLS):
     def static_function(self, x_static, y_static):
         """Matrix of static regressors.
 
+        Parameters
+        ----------
+        y_static : array-like of shape = n_samples_static_function, default = ([0])
+            Output of static function.
+        x_static : array-like of shape = n_samples_static_function, default = ([0])
+            Static function input.
+
         Returns:
         -------
             Q.dot(R) : ndarray of floats
             Returns the multiplication of the matrix of static regressors (Q) and linear mapping (R).
         """
         R, qit = self.R_qit()
-        #  91 to 98 => Converting the qit into a matrix of exponents, where the first column indicates the output, 
+        #  97 to 105 => Converting the qit into a matrix of exponents, where the first column indicates the output, 
         # the second column the first input, the third column the second input and so on.
         a = np.shape(qit)[0]
         N_aux = np.zeros((a, int(np.max(qit))))
@@ -96,7 +103,7 @@ class IM(FROLS):
                     if k + 1 == qit[i, j]:
                         N_aux[i, k] = 1 + N_aux[i, k]
         qit = N_aux
-        # 100 to 105 => Assembly of the matrix Q.
+        # 107 to 112 => Assembly of the matrix Q.
         Q = np.zeros((len(y_static), len(qit)))
         for i in range(0, len(y_static)):
             for j in range(0, len(qit)):
@@ -107,6 +114,15 @@ class IM(FROLS):
 
     def static_gain(self, x_static, y_static, gain):
         """Matrix of static regressors referring to derivative.
+
+        Parameters
+        ----------
+        y_static : array-like of shape = n_samples_static_function, default = ([0])
+            Output of static function.
+        x_static : array-like of shape = n_samples_static_function, default = ([0])
+            Static function input.
+        gain : array-like of shape = n_samples_static_gain, default = ([0])
+            Static gain input.
         
         Returns:
         --------
@@ -115,7 +131,7 @@ class IM(FROLS):
             he matrix of the linear mapping R.
         """
         R, qit = self.R_qit()
-        # 119 to 133 => Construction of the matrix H and G (Static gain).
+        # 135 to 149 => Construction of the matrix H and G (Static gain).
         H = np.zeros((len(y_static), len(qit)))
         G = np.zeros((len(y_static), len(qit)))
         for i in range(0, len(y_static)):
@@ -141,7 +157,7 @@ class IM(FROLS):
         w : ndarray of floats
            Matrix with the weights.
         """
-        w1 = np.logspace(-0.01, -5, num=75, base =2.71)
+        w1 = np.logspace(-0.01, -5, num=20, base =2.71)
         w2 = w1[::-1]
         a1 = []
         a2 = []
@@ -195,12 +211,12 @@ class IM(FROLS):
         w : ndarray, default = ([[0],[0]])
             Matrix with weights.
         """
-        # 206 to 210 => Checking if the weights add up to 1.
+        # 215 to 216 => Checking if the weights add up to 1.
         if sum(W[:, 0]) != 1:
             W = self.weights()
         E = np.zeros(np.shape(W)[1])
         Array_theta = np.zeros((np.shape(W)[1], np.shape(self.final_model)[0]))
-        #  204 to 231 => Calculation of the Parameters as a result of the input data.
+        #  220 to 247 => Calculation of the Parameters as a result of the input data.
         for i in range(0, np.shape(W)[1]):
             part1 = W[0, i]*(psi).T.dot(psi)
             part2 = W[0, i]*(psi.T).dot(y_train)
