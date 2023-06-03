@@ -141,7 +141,7 @@ class IM(FROLS):
         w : ndarray of floats
            Matrix with the weights.
         """
-        w1 = np.logspace(-0.01, -5, num=60, base =2.71)
+        w1 = np.logspace(-0.01, -5, num=75, base =2.71)
         w2 = w1[::-1]
         a1 = []
         a2 = []
@@ -231,4 +231,7 @@ class IM(FROLS):
                 J[w, i] = (((y_static)-(QR.dot(Theta))).T).dot((y_static)-(QR.dot(Theta)))
         for i in range(0, np.shape(W)[1]):
             E[i] = np.linalg.norm(J[:, i]/np.max(J)) # Normalizing quadratic errors.
-        return J/np.max(J), W, E, Array_theta, HR, QR
+        # Finding the smallest squared error in relation to the three objectives.
+        min_value = min(E)
+        position = (list(E).index(min_value))
+        return J/np.max(J), W, E, Array_theta, HR, QR, position
