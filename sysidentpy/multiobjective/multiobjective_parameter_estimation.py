@@ -157,7 +157,7 @@ class IM(FROLS):
         w : ndarray of floats
            Matrix with the weights.
         """
-        w1 = np.logspace(-0.01, -5, num=20, base =2.71)
+        w1 = np.logspace(-0.1, -7, num=50, base =2.71)
         w2 = w1[::-1]
         a1 = []
         a2 = []
@@ -212,29 +212,29 @@ class IM(FROLS):
             Matrix with weights.
         """
         # 215 to 216 => Checking if the weights add up to 1.
-        if sum(W[:, 0]) != 1:
+        if np.round(sum(W[:, 0]), 5) != 1:
             W = self.weights()
         E = np.zeros(np.shape(W)[1])
         Array_theta = np.zeros((np.shape(W)[1], np.shape(self.final_model)[0]))
         #  220 to 247 => Calculation of the Parameters as a result of the input data.
         for i in range(0, np.shape(W)[1]):
-            part1 = W[0, i]*(psi).T.dot(psi)
-            part2 = W[0, i]*(psi.T).dot(y_train)
+            theta1 = W[0, i]*(psi).T.dot(psi)
+            theta2 = W[0, i]*(psi.T).dot(y_train)
             w = 1
             if self.sf == True:
                 QR = self.static_function(x_static, y_static)
-                part1 = W[w, i]*(QR.T).dot(QR) + part1
-                part2 = part2 + (W[w, i]*(QR.T).dot(y_static))\
+                theta1 = W[w, i]*(QR.T).dot(QR) + theta1
+                theta2 = theta2 + (W[w, i]*(QR.T).dot(y_static))\
                     .reshape(-1,1)
                 w = w + 1
             if self.sg == True:
                 HR = self.static_gain(x_static, y_static, gain)
-                part1 = W[w, i]*(HR.T).dot(HR) + part1
-                part2 = part2 + (W[w, i]*(HR.T).dot(gain)).reshape(-1,1)
+                theta1 = W[w, i]*(HR.T).dot(HR) + theta1
+                theta2 = theta2 + (W[w, i]*(HR.T).dot(gain)).reshape(-1,1)
                 w = w+1
             if i == 0:
                 J = np.zeros((w, np.shape(W)[1]))
-            Theta = ((np.linalg.inv(part1)).dot(part2)).reshape(-1, 1)
+            Theta = ((np.linalg.inv(theta1)).dot(theta2)).reshape(-1, 1)
             Array_theta[i, :] = Theta.T
             J[0, i] = (((y_train)-(psi.dot(Theta))).T).dot((y_train)\
                      -(psi.dot(Theta)))
