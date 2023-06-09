@@ -20,10 +20,6 @@ class IM(FROLS):
         Presence of data referring to static gain.
     sf : bool, default=True
         Presence of data regarding static function.
-    n_inputs : int, default=1
-        Number of entries.
-    non_degree : int, default=2
-        Degree of nonlinearity.
     model_type : string, default='NARMAX'
         Model type.
     final_model : ndarray, default = ([[0],[0]])
@@ -32,15 +28,13 @@ class IM(FROLS):
     def __init__(self,
                  sg=True,
                  sf=True,
-                 n_inputs=1,
-                 non_degree=2,
                  model_type='NARMAX',
                  final_model=np.zeros((1, 1)),
                  ):
         self.sg = sg
         self.sf = sf
-        self.n_inputs = n_inputs
-        self.non_degree = non_degree
+        self.n_inputs = np.max(final_model//1000)-1
+        self.non_degree = np.shape(final_model)[1]
         self.model_type = model_type
         self.final_model = final_model
         #self.basis_function = Polynomial(degree=non_degree)
@@ -157,7 +151,7 @@ class IM(FROLS):
         w : ndarray of floats
            Matrix with the weights.
         """
-        w1 = np.logspace(-0.1, -7, num=50, base =2.71)
+        w1 = np.logspace(-0.0000001, -5, num=70, base =2.71)
         w2 = w1[::-1]
         a1 = []
         a2 = []
@@ -246,8 +240,8 @@ class IM(FROLS):
             if self.sf == True:
                 J[w, i] = (((y_static)-(QR.dot(Theta))).T).dot((y_static)-(QR.dot(Theta)))
         for i in range(0, np.shape(W)[1]):
-            E[i] = np.linalg.norm(J[:, i]/np.max(J)) # Normalizing quadratic errors.
+            E[i] = np.sqrt(np.sum(J[:,i]**2)) # Normalizing quadratic errors.
         # Finding the smallest squared error in relation to the three objectives.
         min_value = min(E)
         position = (list(E).index(min_value))
-        return J/np.max(J), W, E, Array_theta, HR, QR, position
+        return J/np.max(E), W, E/np.max(E), Array_theta, HR, QR, position
