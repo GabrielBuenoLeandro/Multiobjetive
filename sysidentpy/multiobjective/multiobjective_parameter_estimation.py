@@ -151,7 +151,7 @@ class IM(FROLS):
         w : ndarray of floats
            Matrix with the weights.
         """
-        w1 = np.logspace(-0.0000001, -5, num=70, base =2.71)
+        w1 = np.logspace(-0.0000001, -5, num=40, base =2.71)
         w2 = w1[::-1]
         a1 = []
         a2 = []
@@ -205,6 +205,8 @@ class IM(FROLS):
         w : ndarray, default = ([[0],[0]])
             Matrix with weights.
         """
+        HR = None
+        QR = None
         # 215 to 216 => Checking if the weights add up to 1.
         if np.round(sum(W[:, 0]), 5) != 1:
             W = self.weights()
@@ -216,15 +218,21 @@ class IM(FROLS):
             theta2 = W[0, i]*(psi.T).dot(y_train)
             w = 1
             if self.sf == True:
-                QR = self.static_function(x_static, y_static)
-                theta1 = W[w, i]*(QR.T).dot(QR) + theta1
-                theta2 = theta2 + (W[w, i]*(QR.T).dot(y_static))\
+                if i==0:
+                    QR = self.static_function(x_static, y_static)
+                    QR_aux1 = (QR.T).dot(QR)
+                    QR_aux2 = (QR.T).dot(y_static)
+                theta1 = W[w, i]*QR_aux1 + theta1
+                theta2 = theta2 + (W[w, i]*QR_aux2)\
                     .reshape(-1,1)
                 w = w + 1
             if self.sg == True:
-                HR = self.static_gain(x_static, y_static, gain)
-                theta1 = W[w, i]*(HR.T).dot(HR) + theta1
-                theta2 = theta2 + (W[w, i]*(HR.T).dot(gain)).reshape(-1,1)
+                if i==0:
+                    HR = self.static_gain(x_static, y_static, gain)
+                    HR_aux1 = (HR.T).dot(HR)
+                    HR_aux2 = (HR.T).dot(gain)
+                theta1 = W[w, i]*HR_aux1 + theta1
+                theta2 = theta2 + (W[w, i]*HR_aux2).reshape(-1,1)
                 w = w+1
             if i == 0:
                 J = np.zeros((w, np.shape(W)[1]))
