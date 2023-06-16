@@ -39,6 +39,16 @@ class IM(FROLS):
         self.final_model = final_model
         #self.basis_function = Polynomial(degree=non_degree)
 
+    
+    def Exp(self, qit):
+        N_aux = np.zeros((int(np.shape(qit)[0]), int(np.max(qit))))
+        for k in range(0, int(np.max(qit))):
+            for i in range(0, np.shape(qit)[0]):
+                for j in range(0, np.shape(qit)[1]):
+                    if k + 1 == qit[i, j]:
+                        N_aux[i, k] = 1 + N_aux[i, k]
+        return N_aux
+
     def R_qit(self):
         """Assembly of the matrix of the linear mapping R, where to locate the terms uses the regressor-space method
 
@@ -50,7 +60,7 @@ class IM(FROLS):
             Row matrix that helps in locating the terms of the linear mapping matrix 
             and will later be used in the making of the static regressor matrix (Q).
         """
-        # 54 to 57 => Construction of the generic qit matrix.
+        # 64 to 67 => Construction of the generic qit matrix.
         xlag = []
         for i in range(0, self.n_inputs):
             xlag.append(1)
@@ -69,7 +79,7 @@ class IM(FROLS):
                 b.append(i) # Identification of null rows of the R matrix.
         R = np.delete(R, b, axis=0) # Eliminating the null rows from the generic R matrix.
         qit = np.delete(qit, b, axis=0) # Eliminating the null rows from the generic qit matrix.
-        return R, qit
+        return R, self.Exp(qit)
                
     def static_function(self, x_static, y_static):
         """Matrix of static regressors.
@@ -87,16 +97,6 @@ class IM(FROLS):
             Returns the multiplication of the matrix of static regressors (Q) and linear mapping (R).
         """
         R, qit = self.R_qit()
-        #  91 to 99 => Converting the qit into a matrix of exponents, where the first column indicates the output, 
-        # the second column the first input, the third column the second input and so on.
-        a = np.shape(qit)[0]
-        N_aux = np.zeros((a, int(np.max(qit))))
-        for k in range(0, int(np.max(qit))):
-            for i in range(0, np.shape(qit)[0]):
-                for j in range(0, np.shape(qit)[1]):
-                    if k + 1 == qit[i, j]:
-                        N_aux[i, k] = 1 + N_aux[i, k]
-        qit = N_aux
         # 101 to 106 => Assembly of the matrix Q.
         Q = np.zeros((len(y_static), len(qit)))
         for i in range(0, len(y_static)):
@@ -104,7 +104,7 @@ class IM(FROLS):
                 Q[i, j] = y_static[i, 0]**(qit[j, 0])
                 for k in range(0, self.n_inputs):
                     Q[i, j] = Q[i, j]*x_static[i, k]**(qit[j, 1+k])
-        return Q.dot(R) 
+        return Q.dot(R), Q
 
     def static_gain(self, x_static, y_static, gain):
         """Matrix of static regressors referring to derivative.
@@ -131,17 +131,23 @@ class IM(FROLS):
         for i in range(0, len(y_static)):
             for j in range(1, len(qit)):
                 if y_static[i, 0] == 0:
-                    H[i, j] = 0
+                    if (qit[j, k])==1:
+                        H[i, j] = gain[i]
+                    else:
+                        H[i, j] = 0
                 else:
                     H[i, j] = gain[i]*qit[j, 0]*y_static[i, 0]\
                         **(qit[j, 0]-1)
                 for k in range(0, self.n_inputs):
                     if x_static[i, k] == 0:
-                        G[i, j] = 0
+                        if (qit[j, 1+k])==1:
+                            G[i, j] = 1
+                        else:
+                             G[i, j] = 0
                     else:
                         G[i, j] = qit[j, 1+k]*x_static[i, k]\
                             **(qit[j, 1+k]-1)
-        return (G+H).dot(R)
+        return (G+H).dot(R), H+G
     
     def weights(self):
         """Weights givenwith each objective.
@@ -221,7 +227,7 @@ class IM(FROLS):
             w = 1
             if self.sf == True:
                 if i==0:
-                    QR = self.static_function(x_static, y_static)
+                    QR = self.static_function(x_static, y_static)[0]
                     QR_aux1 = (QR.T).dot(QR)
                     QR_aux2 = (QR.T).dot(y_static)
                 theta1 = W[w, i]*QR_aux1 + theta1
@@ -230,7 +236,7 @@ class IM(FROLS):
                 w = w + 1
             if self.sg == True:
                 if i==0:
-                    HR = self.static_gain(x_static, y_static, gain)
+                    HR = self.static_gain(x_static, y_static, gain)[0]
                     HR_aux1 = (HR.T).dot(HR)
                     HR_aux2 = (HR.T).dot(gain)
                 theta1 = W[w, i]*HR_aux1 + theta1
