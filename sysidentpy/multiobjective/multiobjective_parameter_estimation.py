@@ -30,7 +30,7 @@ class IM(FROLS):
                  sf=True,
                  model_type='NARMAX',
                  final_model=np.zeros((1, 1)),
-                 norm = True):
+                 norm=True):
         self.sg = sg
         self.sf = sf
         self.n_inputs = np.max(final_model//1000)-1
@@ -258,9 +258,11 @@ class IM(FROLS):
                 J[w, i] = (((y_static)-(QR.dot(Theta))).T).dot((y_static)-(QR.dot(Theta)))
         for i in range(0, np.shape(W)[1]):
             E[i] = np.sqrt(np.sum(J[:,i]**2)) # Normalizing quadratic errors.
-        for i in range(0, np.shape(J)[0]):
-            J[i, :] = J[i, :]/np.max(J[i,:])
+        if self.norm == True:
+            for i in range(0, np.shape(J)[0]):
+                J[i, :] = J[i, :]/np.max(J[i,:])
+            E/np.max(E)
         # Finding the smallest squared error in relation to the three objectives.
         min_value = min(E)
         position = (list(E).index(min_value))
-        return J, W, E/np.max(E), Array_theta, HR, QR, position
+        return J, W, E, Array_theta, HR, QR, position
