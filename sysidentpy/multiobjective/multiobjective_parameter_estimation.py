@@ -30,7 +30,7 @@ class IM(FROLS):
                  sf=True,
                  model_type='NARMAX',
                  final_model=np.zeros((1, 1)),
-                 norm=True):
+                 norm=False):
         self.sg = sg
         self.sf = sf
         self.n_inputs = np.max(final_model//1000)-1
@@ -261,7 +261,7 @@ class IM(FROLS):
         if self.norm == True:
             for i in range(0, np.shape(J)[0]):
                 J[i, :] = J[i, :]/np.max(J[i,:])
-            E/np.max(E)
+            E = E/np.max(E)
         # Finding the smallest squared error in relation to the three objectives.
         min_value = min(E)
         position = (list(E).index(min_value))
