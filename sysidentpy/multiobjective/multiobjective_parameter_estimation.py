@@ -61,7 +61,7 @@ class IM(FROLS):
             Row matrix that helps in locating the terms of the linear mapping matrix 
             and will later be used in the making of the static regressor matrix (Q).
         """
-        # 64 to 67 => Construction of the generic qit matrix.
+        # 65 to 68 => Construction of the generic qit matrix.
         xlag = []
         for i in range(0, self.n_inputs):
             xlag.append(1)
@@ -69,7 +69,7 @@ class IM(FROLS):
         # With xlag and ylag equal to 1 there is no repetition of terms, being ideal for qit assembly.
         qit = object_qit.regressor_space(n_inputs=self.n_inputs)//1000
         model = self.final_model//1000
-        # 62 to 67 => Construction of the generic R matrix.
+        # 73 to 78 => Construction of the generic R matrix.
         R = np.zeros((np.shape(qit)[0], np.shape(model)[0]))
         b = []
         for i in range(0, np.shape(qit)[0]):
@@ -98,7 +98,7 @@ class IM(FROLS):
             Returns the multiplication of the matrix of static regressors (Q) and linear mapping (R).
         """
         R, qit = self.R_qit()
-        # 101 to 106 => Assembly of the matrix Q.
+        # 102 to 107 => Assembly of the matrix Q.
         Q = np.zeros((len(y_static), len(qit)))
         for i in range(0, len(y_static)):
             for j in range(0, len(qit)):
@@ -126,7 +126,7 @@ class IM(FROLS):
             he matrix of the linear mapping R.
         """
         R, qit = self.R_qit()
-        # 129 to 143 => Construction of the matrix H and G (Static gain).
+        # 130 to 151 => Construction of the matrix H and G (Static gain).
         H = np.zeros((len(y_static), len(qit)))
         G = np.zeros((len(y_static), len(qit)))
         for i in range(0, len(y_static)):
@@ -149,7 +149,6 @@ class IM(FROLS):
                         G[i, j] = qit[j, 1+k]*x_static[i, k]\
                             **(qit[j, 1+k]-1)
         return (G+H).dot(R), H+G
-    
     def weights(self):
         """Weights givenwith each objective.
         
@@ -214,12 +213,12 @@ class IM(FROLS):
         """
         HR = None
         QR = None
-        # 211 to 212 => Checking if the weights add up to 1.
+        # 217 to 218 => Checking if the weights add up to 1.
         if np.round(sum(W[:, 0]), 5) != 1:
             W = self.weights()
         E = np.zeros(np.shape(W)[1])
         Array_theta = np.zeros((np.shape(W)[1], np.shape(self.final_model)[0]))
-        #  216 to 251 => Calculation of the Parameters as a result of the input data.
+        #  222 to 257 => Calculation of the Parameters as a result of the input data.
         PSI_aux1 = (psi).T.dot(psi)
         PSI_aux2 = (psi.T).dot(y_train)
         for i in range(0, np.shape(W)[1]):
