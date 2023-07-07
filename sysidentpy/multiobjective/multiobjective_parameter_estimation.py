@@ -30,7 +30,7 @@ class IM(FROLS):
                  sf=True,
                  model_type='NARMAX',
                  final_model=np.zeros((1, 1)),
-                 norm=False):
+                 norm=True):
         self.sg = sg
         self.sf = sf
         self.n_inputs = np.max(final_model//1000)-1
