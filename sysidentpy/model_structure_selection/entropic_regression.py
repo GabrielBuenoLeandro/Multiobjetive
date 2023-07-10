@@ -5,37 +5,34 @@
 # License: BSD 3 clause
 
 import warnings
+from typing import Union
 
 import numpy as np
 from numpy import linalg as LA
 from scipy.spatial.distance import cdist
 from scipy.special import psi
 
-from ..narmax_base import (
-    GenerateRegressors,
-    HouseHolder,
-    InformationMatrix,
-    ModelInformation,
-    ModelPrediction,
-)
+from ..narmax_base import BaseMSS
+from ..basis_function import Fourier, Polynomial
 from ..parameter_estimation.estimators import Estimators
-from ..utils._check_arrays import (
-    _check_positive_int,
-    _num_features,
-    check_random_state,
-    check_X_y,
+from ..utils._check_arrays import _check_positive_int, _num_features, check_random_state
+from ..utils.deprecation import deprecated
+
+
+@deprecated(
+    version="v0.3.0",
+    future_version="v0.4.0",
+    message=(
+        "Passing a string to define the estimator will rise an error in v0.4.0."
+        " \n You'll have to use ER(estimator=LeastSquares()) instead. \n The"
+        " only change is that you'll have to define the estimator first instead"
+        " of passing a string like 'least_squares'. \n This change will make"
+        " easier to implement new estimators and it'll improve code"
+        " readability."
+    ),
 )
-
-
-class ER(
-    Estimators,
-    GenerateRegressors,
-    HouseHolder,
-    ModelInformation,
-    InformationMatrix,
-    ModelPrediction,
-):
-    """Entropic Regression Algorithm
+class ER(Estimators, BaseMSS):
+    r"""Entropic Regression Algorithm
 
     Build Polynomial NARMAX model using the Entropic Regression Algorithm ([1]_).
     This algorithm is based on the Matlab package available on:
@@ -43,18 +40,19 @@ class ER(
 
     The NARMAX model is described as:
 
-    .. math::
+    $$
+        y_k= F^\ell[y_{k-1}, \dotsc, y_{k-n_y},x_{k-d}, x_{k-d-1}, \dotsc, x_{k-d-n_x},
+        e_{k-1}, \dotsc, e_{k-n_e}] + e_k
+    $$
 
-        y_k= F^\ell[y_{k-1}, \dotsc, y_{k-n_y},x_{k-d}, x_{k-d-1}, \dotsc, x_{k-d-n_x}, e_{k-1}, \dotsc, e_{k-n_e}] + e_k
-
-    where :math:`n_y\in \mathbb{N}^*`, :math:`n_x \in \mathbb{N}`, :math:`n_e \in \mathbb{N}`,
+    where $n_y\in \mathbb{N}^*$, $n_x \in \mathbb{N}$, $n_e \in \mathbb{N}$,
     are the maximum lags for the system output and input respectively;
-    :math:`x_k \in \mathbb{R}^{n_x}` is the system input and :math:`y_k \in \mathbb{R}^{n_y}`
-    is the system output at discrete time :math:`k \in \mathbb{N}^n`;
-    :math:`e_k \in \mathbb{R}^{n_e}` stands for uncertainties and possible noise
-    at discrete time :math:`k`. In this case, :math:`\mathcal{F}^\ell` is some nonlinear function
-    of the input and output regressors with nonlinearity degree :math:`\ell \in \mathbb{N}`
-    and :math:`d` is a time delay typically set to :math:`d=1`.
+    $x_k \in \mathbb{R}^{n_x}$ is the system input and $y_k \in \mathbb{R}^{n_y}$
+    is the system output at discrete time $k \in \mathbb{N}^n$;
+    $e_k \in \mathbb{R}^{n_e}$ stands for uncertainties and possible noise
+    at discrete time $k$. In this case, $\mathcal{F}^\ell$ is some nonlinear function
+    of the input and output regressors with nonlinearity degree $\ell \in \mathbb{N}$
+    and $d$ is a time delay typically set to $d=1$.
 
     Parameters
     ----------
@@ -132,14 +130,14 @@ class ER(
 
     References
     ----------
-    .. [1] Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
+    - Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
         Regression Beats the Outliers Problem in Nonlinear System
         Identification. Chaos 30, 013107 (2020).
-    .. [2] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+    - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
         Estimating mutual information. Physical Review E, 69:066-138,2004
-    .. [3] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+    - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
         Estimating mutual information. Physical Review E, 69:066-138,2004
-    .. [4] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+    - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
         Estimating mutual information. Physical Review E, 69:066-138,2004
 
     """
@@ -147,37 +145,38 @@ class ER(
     def __init__(
         self,
         *,
-        ylag=2,
-        xlag=2,
-        q=0.99,
-        estimator="least_squares",
-        extended_least_squares=False,
-        h=0.01,
-        k=2,
-        mutual_information_estimator="mutual_information_knn",
-        n_perm=200,
-        p=np.inf,
-        skip_forward=False,
-        lam=0.98,
-        delta=0.01,
-        offset_covariance=0.2,
-        mu=0.01,
-        eps=np.finfo(np.float64).eps,
-        gama=0.2,
-        weight=0.02,
-        model_type="NARMAX",
-        basis_function=None,
-        random_state=None,
+        ylag: Union[int, list] = 1,
+        xlag: Union[int, list] = 1,
+        q: float = 0.99,
+        estimator: str = "least_squares",
+        extended_least_squares: bool = False,
+        h: float = 0.01,
+        k: int = 2,
+        mutual_information_estimator: str = "mutual_information_knn",
+        n_perm: int = 200,
+        p: Union[float, int] = np.inf,
+        skip_forward: bool = False,
+        lam: float = 0.98,
+        delta: float = 0.01,
+        offset_covariance: float = 0.2,
+        mu: float = 0.01,
+        eps: float = np.finfo(np.float64).eps,
+        gama: float = 0.2,
+        weight: float = 0.02,
+        model_type: str = "NARMAX",
+        basis_function: Union[Polynomial, Fourier] = Polynomial(),
+        random_state: Union[int, None] = None,
     ):
         self.basis_function = basis_function
         self.model_type = model_type
+        self.build_matrix = self.get_build_io_method(model_type)
         self.xlag = xlag
         self.ylag = ylag
         self.non_degree = basis_function.degree
-        self.max_lag = self._get_max_lag(ylag, xlag)
+        self.max_lag = self._get_max_lag()
         self.k = k
         self.estimator = estimator
-        self._extended_least_squares = extended_least_squares
+        self.extended_least_squares = extended_least_squares
         self.q = q
         self.h = h
         self.mutual_information_estimator = mutual_information_estimator
@@ -186,6 +185,16 @@ class ER(
         self.skip_forward = skip_forward
         self.random_state = random_state
         self.rng = check_random_state(random_state)
+        self.tol = None
+        self.ensemble = None
+        self.n_inputs = None
+        self.estimated_tolerance = None
+        self.regressor_code = None
+        self.final_model = None
+        self.theta = None
+        self.n_terms = None
+        self.err = None
+        self.pivv = None
         self._validate_params()
         super().__init__(
             lam=lam,
@@ -195,53 +204,54 @@ class ER(
             eps=eps,
             gama=gama,
             weight=weight,
+            basis_function=basis_function,
         )
 
     def _validate_params(self):
         """Validate input params."""
         if isinstance(self.ylag, int) and self.ylag < 1:
-            raise ValueError("ylag must be integer and > zero. Got %f" % self.ylag)
+            raise ValueError(f"ylag must be integer and > zero. Got {self.ylag}")
 
         if isinstance(self.xlag, int) and self.xlag < 1:
-            raise ValueError("xlag must be integer and > zero. Got %f" % self.xlag)
+            raise ValueError(f"xlag must be integer and > zero. Got {self.xlag}")
 
         if not isinstance(self.xlag, (int, list)):
-            raise ValueError("xlag must be integer and > zero. Got %f" % self.xlag)
+            raise ValueError(f"xlag must be integer and > zero. Got {self.xlag}")
 
         if not isinstance(self.ylag, (int, list)):
-            raise ValueError("ylag must be integer and > zero. Got %f" % self.ylag)
+            raise ValueError(f"ylag must be integer and > zero. Got {self.ylag}")
 
         if not isinstance(self.k, int) or self.k < 1:
-            raise ValueError("k must be integer and > zero. Got %f" % self.k)
+            raise ValueError(f"k must be integer and > zero. Got {self.k}")
 
         if not isinstance(self.n_perm, int) or self.n_perm < 1:
-            raise ValueError("n_perm must be integer and > zero. Got %f" % self.n_perm)
+            raise ValueError(f"n_perm must be integer and > zero. Got {self.n_perm}")
 
         if not isinstance(self.q, float) or self.q > 1 or self.q <= 0:
             raise ValueError(
-                "q must be float and must be between 0 and 1 inclusive. Got %f" % self.q
+                f"q must be float and must be between 0 and 1 inclusive. Got {self.q}"
             )
 
         if not isinstance(self.skip_forward, bool):
             raise TypeError(
-                "skip_forward must be False or True. Got %f" % self.skip_forward
+                f"skip_forward must be False or True. Got {self.skip_forward}"
             )
 
-        if not isinstance(self._extended_least_squares, bool):
+        if not isinstance(self.extended_least_squares, bool):
             raise TypeError(
-                "extended_least_squares must be False or True. Got %f"
-                % self._extended_least_squares
+                "extended_least_squares must be False or True. Got"
+                f" {self.extended_least_squares}"
             )
 
         if self.model_type not in ["NARMAX", "NAR", "NFIR"]:
             raise ValueError(
-                "model_type must be NARMAX, NAR or NFIR. Got %s" % self.model_type
+                f"model_type must be NARMAX, NAR or NFIR. Got {self.model_type}"
             )
 
     def mutual_information_knn(self, y, y_perm):
         """Finds the mutual information.
 
-        Finds the mutual information between :math:`x` and :math:`y` given :math:`z`.
+        Finds the mutual information between $x$ and $y$ given $z$.
 
         This code is based on Matlab Entropic Regression package.
 
@@ -259,14 +269,14 @@ class ER(
 
         References
         ----------
-        .. [1] Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
+        - Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
             Regression Beats the Outliers Problem in Nonlinear System
             Identification. Chaos 30, 013107 (2020).
-        .. [2] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
-        .. [3] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
-        .. [4] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
 
         """
@@ -415,7 +425,7 @@ class ER(
 
     def conditional_mutual_information(self, y, f1, f2):
         """Finds the conditional mutual information.
-        Finds the conditioned mutual information between :math:`y` and :math:`f1` given :math:`f2`.
+        Finds the conditioned mutual information between $y$ and $f1$ given $f2$.
 
         This code is based on Matlab Entropic Regression package.
         https://github.com/almomaa/ERFit-Package
@@ -436,14 +446,14 @@ class ER(
 
         References
         ----------
-        .. [1] Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
+        - Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
             Regression Beats the Outliers Problem in Nonlinear System
             Identification. Chaos 30, 013107 (2020).
-        .. [2] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
-        .. [3] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
-        .. [4] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
 
         """
@@ -485,7 +495,7 @@ class ER(
 
     def tolerance_estimator(self, y):
         """Tolerance Estimation for mutual independence test.
-        Finds the conditioned mutual information between :math:`y` and :math:`f1` given :math:`f2`.
+        Finds the conditioned mutual information between $y$ and $f1$ given $f2$.
 
         This code is based on Matlab Entropic Regression package.
         https://github.com/almomaa/ERFit-Package
@@ -502,19 +512,25 @@ class ER(
 
         References
         ----------
-        .. [1] Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
+        - Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
             Regression Beats the Outliers Problem in Nonlinear System
             Identification. Chaos 30, 013107 (2020).
-        .. [2] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
-        .. [3] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
-        .. [4] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
 
         """
         ksg_estimation = []
-        for i in range(self.n_perm):
+        # ksg_estimation = [
+        #     getattr(self, self.mutual_information_estimator)(y,
+        # self.rng.permutation(y))
+        #     for i in range(self.n_perm)
+        # ]
+
+        for _ in range(self.n_perm):
             mutual_information_output = getattr(
                 self, self.mutual_information_estimator
             )(y, self.rng.permutation(y))
@@ -550,34 +566,22 @@ class ER(
 
         References
         ----------
-        .. [1] Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
+        - Abd AlRahman R. AlMomani, Jie Sun, and Erik Bollt. How Entropic
             Regression Beats the Outliers Problem in Nonlinear System
             Identification. Chaos 30, 013107 (2020).
-        .. [2] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
-        .. [3] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
-        .. [4] Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
+        - Alexander Kraskov, Harald St¨ogbauer, and Peter Grassberger.
             Estimating mutual information. Physical Review E, 69:066-138,2004
 
         """
         if y is None:
             raise ValueError("y cannot be None")
 
-        if self.model_type == "NAR":
-            lagged_data = self.build_output_matrix(y, self.ylag)
-            self.max_lag = self._get_max_lag(ylag=self.ylag)
-        elif self.model_type == "NFIR":
-            lagged_data = self.build_input_matrix(X, self.xlag)
-            self.max_lag = self._get_max_lag(xlag=self.xlag)
-        elif self.model_type == "NARMAX":
-            check_X_y(X, y)
-            self.max_lag = self._get_max_lag(ylag=self.ylag, xlag=self.xlag)
-            lagged_data = self.build_input_output_matrix(X, y, self.xlag, self.ylag)
-        else:
-            raise ValueError(
-                "Unrecognized model type. The model_type should be NARMAX, NAR or NFIR."
-            )
+        self.max_lag = self._get_max_lag()
+        lagged_data = self.build_matrix(X, y)
 
         if self.basis_function.__class__.__name__ == "Polynomial":
             reg_matrix = self.basis_function.fit(
@@ -589,20 +593,19 @@ class ER(
             )
 
         if X is not None:
-            self._n_inputs = _num_features(X)
+            self.n_inputs = _num_features(X)
         else:
-            self._n_inputs = 1  # just to create the regressor space base
+            self.n_inputs = 1  # just to create the regressor space base
 
-        self.regressor_code = self.regressor_space(
-            self.non_degree, self.xlag, self.ylag, self._n_inputs, self.model_type
-        )
+        self.regressor_code = self.regressor_space(self.n_inputs)
 
         if self.regressor_code.shape[0] > 90:
             warnings.warn(
                 (
-                    f"Given the higher number of possible regressors ({self.regressor_code.shape[0]}), "
-                    "the Entropic Regression algorithm may take long time to run. "
-                    "Consider reducing the number of regressors "
+                    "Given the higher number of possible regressors"
+                    f" ({self.regressor_code.shape[0]}), the Entropic Regression"
+                    " algorithm may take long time to run. Consider reducing the"
+                    " number of regressors "
                 ),
                 stacklevel=2,
             )
@@ -611,7 +614,7 @@ class ER(
         y = y[self.max_lag :].reshape(-1, 1)
         self.tol = 0
         ksg_estimation = []
-        for i in range(self.n_perm):
+        for _ in range(self.n_perm):
             mutual_information_output = getattr(
                 self, self.mutual_information_estimator
             )(y, self.rng.permutation(y))
@@ -673,7 +676,7 @@ class ER(
         self.pivv = final_model
         return self
 
-    def predict(self, X=None, y=None, steps_ahead=None, forecast_horizon=None):
+    def predict(self, *, X=None, y=None, steps_ahead=None, forecast_horizon=None):
         """Return the predicted values given an input.
 
         The predict function allows a friendly usage by the user.
@@ -700,20 +703,184 @@ class ER(
         """
         if self.basis_function.__class__.__name__ == "Polynomial":
             if steps_ahead is None:
-                return self._model_prediction(X, y, forecast_horizon=forecast_horizon)
-            elif steps_ahead == 1:
-                return self._one_step_ahead_prediction(X, y)
-            else:
-                _check_positive_int(steps_ahead, "steps_ahead")
-                return self._n_step_ahead_prediction(X, y, steps_ahead=steps_ahead)
+                yhat = self._model_prediction(X, y, forecast_horizon=forecast_horizon)
+                yhat = yhat = np.concatenate([y[: self.max_lag], yhat], axis=0)
+                return yhat
+            if steps_ahead == 1:
+                yhat = self._one_step_ahead_prediction(X, y)
+                yhat = np.concatenate([y[: self.max_lag], yhat], axis=0)
+                return yhat
+
+            _check_positive_int(steps_ahead, "steps_ahead")
+            yhat = self._n_step_ahead_prediction(X, y, steps_ahead=steps_ahead)
+            yhat = np.concatenate([y[: self.max_lag], yhat], axis=0)
+            return yhat
+
+        if steps_ahead is None:
+            yhat = self._basis_function_predict(X, y, forecast_horizon=forecast_horizon)
+            yhat = np.concatenate([y[: self.max_lag], yhat], axis=0)
+            return yhat
+        if steps_ahead == 1:
+            yhat = self._one_step_ahead_prediction(X, y)
+            yhat = np.concatenate([y[: self.max_lag], yhat], axis=0)
+            return yhat
+
+        yhat = self._basis_function_n_step_prediction(
+            X, y, steps_ahead=steps_ahead, forecast_horizon=forecast_horizon
+        )
+        yhat = np.concatenate([y[: self.max_lag], yhat], axis=0)
+        return yhat
+
+    def _one_step_ahead_prediction(self, X, y):
+        """Perform the 1-step-ahead prediction of a model.
+
+        Parameters
+        ----------
+        y : array-like of shape = max_lag
+            Initial conditions values of the model
+            to start recursive process.
+        X : ndarray of floats of shape = n_samples
+            Vector with input values to be used in model simulation.
+
+        Returns
+        -------
+        yhat : ndarray of floats
+               The 1-step-ahead predicted values of the model.
+
+        """
+        lagged_data = self.build_matrix(X, y)
+
+        if self.basis_function.__class__.__name__ == "Polynomial":
+            X_base = self.basis_function.transform(
+                lagged_data,
+                self.max_lag,
+                predefined_regressors=self.pivv[: len(self.final_model)],
+            )
         else:
-            if steps_ahead is None:
-                return self._basis_function_predict(
-                    X, y, self.theta, forecast_horizon=forecast_horizon
-                )
-            elif steps_ahead == 1:
-                return self._one_step_ahead_prediction(X, y)
-            else:
-                return self.basis_function_n_step_prediction(
-                    X, y, steps_ahead=steps_ahead, forecast_horizon=forecast_horizon
-                )
+            X_base, _ = self.basis_function.transform(
+                lagged_data,
+                self.max_lag,
+                predefined_regressors=self.pivv[: len(self.final_model)],
+            )
+
+        yhat = super()._one_step_ahead_prediction(X_base)
+        return yhat.reshape(-1, 1)
+
+    def _n_step_ahead_prediction(self, X, y, steps_ahead):
+        """Perform the n-steps-ahead prediction of a model.
+
+        Parameters
+        ----------
+        y : array-like of shape = max_lag
+            Initial conditions values of the model
+            to start recursive process.
+        X : ndarray of floats of shape = n_samples
+            Vector with input values to be used in model simulation.
+
+        Returns
+        -------
+        yhat : ndarray of floats
+               The n-steps-ahead predicted values of the model.
+
+        """
+        yhat = super()._n_step_ahead_prediction(X, y, steps_ahead)
+        return yhat
+
+    def _model_prediction(self, X, y_initial, forecast_horizon=None):
+        """Perform the infinity steps-ahead simulation of a model.
+
+        Parameters
+        ----------
+        y_initial : array-like of shape = max_lag
+            Number of initial conditions values of output
+            to start recursive process.
+        X : ndarray of floats of shape = n_samples
+            Vector with input values to be used in model simulation.
+
+        Returns
+        -------
+        yhat : ndarray of floats
+               The predicted values of the model.
+
+        """
+        if self.model_type in ["NARMAX", "NAR"]:
+            return self._narmax_predict(X, y_initial, forecast_horizon)
+        elif self.model_type == "NFIR":
+            return self._nfir_predict(X, y_initial)
+        else:
+            raise ValueError(
+                f"model_type must be NARMAX, NAR or NFIR. Got {self.model_type}"
+            )
+
+    def _narmax_predict(self, X, y_initial, forecast_horizon):
+        if len(y_initial) < self.max_lag:
+            raise ValueError(
+                "Insufficient initial condition elements! Expected at least"
+                f" {self.max_lag} elements."
+            )
+
+        if X is not None:
+            forecast_horizon = X.shape[0]
+        else:
+            forecast_horizon = forecast_horizon + self.max_lag
+
+        if self.model_type == "NAR":
+            self.n_inputs = 0
+
+        y_output = super()._narmax_predict(X, y_initial, forecast_horizon)
+        return y_output
+
+    def _nfir_predict(self, X, y_initial):
+        y_output = super()._nfir_predict(X, y_initial)
+        return y_output
+
+    def _basis_function_predict(self, X, y_initial, forecast_horizon=None):
+        if X is not None:
+            forecast_horizon = X.shape[0]
+        else:
+            forecast_horizon = forecast_horizon + self.max_lag
+
+        if self.model_type == "NAR":
+            self.n_inputs = 0
+
+        yhat = super()._basis_function_predict(X, y_initial, forecast_horizon)
+        return yhat.reshape(-1, 1)
+
+    def _basis_function_n_step_prediction(self, X, y, steps_ahead, forecast_horizon):
+        """Perform the n-steps-ahead prediction of a model.
+
+        Parameters
+        ----------
+        y : array-like of shape = max_lag
+            Initial conditions values of the model
+            to start recursive process.
+        X : ndarray of floats of shape = n_samples
+            Vector with input values to be used in model simulation.
+
+        Returns
+        -------
+        yhat : ndarray of floats
+               The n-steps-ahead predicted values of the model.
+
+        """
+        if len(y) < self.max_lag:
+            raise ValueError(
+                "Insufficient initial condition elements! Expected at least"
+                f" {self.max_lag} elements."
+            )
+
+        if X is not None:
+            forecast_horizon = X.shape[0]
+        else:
+            forecast_horizon = forecast_horizon + self.max_lag
+
+        yhat = super()._basis_function_n_step_prediction(
+            X, y, steps_ahead, forecast_horizon
+        )
+        return yhat.reshape(-1, 1)
+
+    def _basis_function_n_steps_horizon(self, X, y, steps_ahead, forecast_horizon):
+        yhat = super()._basis_function_n_steps_horizon(
+            X, y, steps_ahead, forecast_horizon
+        )
+        return yhat.reshape(-1, 1)
