@@ -136,7 +136,7 @@ class AILS:
         R = np.delete(R, null_rows, axis=0)
         qit = np.delete(qit, null_rows, axis=0)
         return R, self.get_term_clustering(qit)
-    
+
     def build_static_function_information(self, x_static, y_static):
         """
         Construct a matrix of static regressors for a NARMAX model.
@@ -178,6 +178,63 @@ class AILS:
         static_covariance = (QR.T).dot(QR)
         static_response = (QR.T).dot(y_static)
         return QR, static_covariance, static_response
+
+    def build_static_gain_information(self, x_static, y_static, gain):
+        """
+        Construct a matrix of static regressors referring to the derivative (gain).
+
+        Parameters
+        ----------
+        y_static : array-like, shape (n_samples_static_function,)
+            Output of the static function.
+        x_static : array-like, shape (n_samples_static_function,)
+            Static function input.
+        gain : array-like, shape (n_samples_static_gain,)
+            Static gain input.
+
+        Returns
+        -------
+        HR : ndarray of floats, shape (n_samples_static_function, n_parameters)
+            The matrix of static regressors for the derivative (gain) multiplied by the
+            linear mapping matrix R.
+        gain_covariance : ndarray of floats, shape (n_parameters, n_parameters)
+            The covariance matrix (HR'HR) for the gain-related regressors.
+        gain_response : ndarray of floats, shape (n_parameters,)
+            The response vector (HR'y) for the gain-related regressors.
+
+        Notes
+        -----
+        This function constructs a matrix of static regressors (G+H) for the derivative
+        (gain) based on the provided static function outputs (y_static), inputs
+        (x_static), and gain values. The linear mapping matrix (R) should be
+        precomputed before calling this function.
+
+        """
+        R, qit = self.build_linear_mapping()
+        H = np.zeros((len(y_static), len(qit)))
+        G = np.zeros((len(y_static), len(qit)))
+        for i in range(0, len(y_static)):
+            for j in range(1, len(qit)):
+                if y_static[i, 0] == 0:
+                    if (qit[j, 0]) == 1:
+                        H[i, j] = gain[i]
+                    else:
+                        H[i, j] = 0
+                else:
+                    H[i, j] = gain[i] * qit[j, 0] * y_static[i, 0] ** (qit[j, 0] - 1)
+                for k in range(0, self.n_inputs):
+                    if x_static[i, k] == 0:
+                        if (qit[j, 1 + k]) == 1:
+                            G[i, j] = 1
+                        else:
+                            G[i, j] = 0
+                    else:
+                        G[i, j] = qit[j, 1 + k] * x_static[i, k] ** (qit[j, 1 + k] - 1)
+
+        HR = (G + H).dot(R)
+        gain_covariance = (HR.T).dot(HR)
+        gain_response = (HR.T).dot(gain)
+        return HR, gain_covariance, gain_response
 
 
 class IM(FROLS):
