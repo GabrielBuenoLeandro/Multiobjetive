@@ -267,7 +267,7 @@ class AILS:
         gain_weight = np.flip(w2_grid[mask])
         static_weight = np.flip(w3_grid[mask])
         return np.vstack([dynamic_weight, gain_weight, static_weight])
-    
+
     def get_cost_function(self, y, psi, theta):
         """
         Calculate the cost function based on residuals.
@@ -296,7 +296,7 @@ class AILS:
         """
         residuals = y - psi.dot(theta)
         return residuals.T.dot(residuals)
-    
+
     def build_system_data(self, y, static_gain, static_function):
         """
         Construct a list of output data components for the NARMAX system.
@@ -330,7 +330,7 @@ class AILS:
             return [y] + [static_gain]
 
         return [y] + [static_gain] + [static_function]
-    
+
     def build_affine_data(self, psi, HR, QR):
         """
         Construct a list of affine data components for NARMAX modeling.
@@ -366,6 +366,112 @@ class AILS:
             return [psi] + [HR]
 
         return [psi] + [HR] + [QR]
+
+    def affine_information_least_squares(
+        self,
+        y_static=np.zeros(1),
+        x_static=np.zeros(1),
+        gain=np.zeros(1),
+        y_train=np.zeros(1),
+        psi=np.zeros((1, 1)),
+        weighing_matrix=np.zeros((1, 1)),
+    ):
+        """Calculation of parameters via multi-objective techniques.
+
+        Parameters
+        ----------
+        y_static : array-like of shape = n_samples_static_function, default = ([0])
+            Output of static function.
+        x_static : array-like of shape = n_samples_static_function, default = ([0])
+            Static function input.
+        gain : array-like of shape = n_samples_static_gain, default = ([0])
+            Static gain input.
+        y_train : array-like of shape = n_samples, default = ([0])
+            The target data used in the identification process.
+        psi : ndarray of floats, default = ([[0],[0]])
+            Matrix of static regressors.
+
+        Returns
+        -------
+        J : ndarray
+            Matrix referring to the objectives.
+        weighing_matrix : ndarray
+            Matrix referring to weights.
+        euclidean_norm : ndarray
+            Matrix of the Euclidean norm.
+        Array_theta : ndarray
+            Matrix with parameters for each weight.
+        HR : ndarray
+            H matrix multiplied by R.
+        QR : ndarray
+            Q matrix multiplied by R.
+        w : ndarray, default = ([[0],[0]])
+            Matrix with weights.
+        """
+        if np.round(sum(weighing_matrix[:, 0]), 5) != 1:
+            weighing_matrix = self.weights()
+
+        HR, QR = None, None
+        n_parameters = weighing_matrix.shape[1]
+        num_objectives = self.static_function + self.static_gain + 1
+        euclidean_norm = np.zeros(n_parameters)
+        theta = np.zeros((n_parameters, self.final_model.shape[0]))
+        dynamic_covariance = (psi).T.dot(psi)
+        dynamic_response = (psi.T).dot(y_train)
+
+        if self.static_function:
+            QR, static_covariance, static_response = (
+                self.build_static_function_information(x_static, y_static)
+            )
+        if self.static_gain:
+            HR, gain_covariance, gain_response = self.build_static_gain_information(
+                x_static, y_static, gain
+            )
+        J = np.zeros((num_objectives, n_parameters))
+        system_data = self.build_system_data(y_train, gain, y_static)
+        affine_information_data = self.build_affine_data(psi, HR, QR)
+        for i in range(n_parameters):
+            theta1 = weighing_matrix[0, i] * dynamic_covariance
+            theta2 = weighing_matrix[0, i] * dynamic_response
+
+            w = 1
+            if self.static_function:
+                theta1 += weighing_matrix[w, i] * static_covariance
+                theta2 += weighing_matrix[w, i] * static_response.reshape(-1, 1)
+                w += 1
+
+            if self.static_gain:
+                theta1 += weighing_matrix[w, i] * gain_covariance
+                theta2 += weighing_matrix[w, i] * gain_response.reshape(-1, 1)
+                w += 1
+
+            tmp_theta = np.linalg.lstsq(theta1, theta2, rcond=None)[0]
+            theta[i, :] = tmp_theta.T
+
+            for j in range(num_objectives):
+                residuals = self.get_cost_function(
+                    system_data[j], affine_information_data[j], tmp_theta
+                )
+                J[j, i] = residuals
+
+            euclidean_norm[i] = np.linalg.norm(J[:, i])
+
+        if self.normalize is True:
+            J /= np.max(J, axis=1)[:, np.newaxis]
+            euclidean_norm /= np.max(euclidean_norm)
+
+            euclidean_norm = euclidean_norm / np.max(euclidean_norm)
+
+        position = np.argmin(euclidean_norm)
+        return (
+            J,
+            weighing_matrix,
+            euclidean_norm,
+            theta,
+            HR,
+            QR,
+            position,
+        )
 
 
 class IM(FROLS):
