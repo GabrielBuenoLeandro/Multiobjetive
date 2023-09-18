@@ -95,6 +95,48 @@ class AILS:
 
         return counts_matrix
 
+    def build_linear_mapping(self):
+        """
+        Assemble the linear mapping matrix R using the regressor-space method.
+
+        This function constructs the linear mapping matrix R, which plays a key role in
+        mapping the parameter vector to the cluster coefficients. It also generates a
+        row matrix qit that assists in locating terms within the linear mapping matrix.
+        This qit matrix is later used in creating the static regressor matrix (Q).
+
+        Returns
+        -------
+        R : ndarray of int
+            A constant matrix of ones and zeros that maps the parameter vector to
+            cluster coefficients.
+        qit : ndarray of int
+            A row matrix that helps locate terms within the linear mapping matrix R and
+            is used in the creation of the static regressor matrix (Q).
+
+        Notes
+        -----
+        The linear mapping matrix R is constructed using the regressor-space method.
+        It plays a crucial role in the parameter estimation process, facilitating the
+        mapping of parameter values to cluster coefficients. The qit matrix aids in
+        term localization within the linear mapping matrix R and is subsequently used
+        to build the static regressor matrix (Q).
+
+        """
+        xlag = [1] * self.n_inputs
+
+        object_qit = RegressorDictionary(xlag=xlag, ylag=[1])
+        # Given xlag and ylag equal to 1, there is no repetition of terms, which is
+        # ideal for building qit.
+        qit = object_qit.regressor_space(n_inputs=self.n_inputs) // 1000
+        model = self.final_model // 1000
+        R = np.all(qit[:, None, :] == model, axis=2).astype(int)
+        # Find rows with all zeros in R (sum of row elements is 0)
+        null_rows = list(np.where(np.sum(R, axis=1) == 0)[0])
+
+        R = np.delete(R, null_rows, axis=0)
+        qit = np.delete(qit, null_rows, axis=0)
+        return R, self.get_term_clustering(qit)
+
 
 class IM(FROLS):
     """Multiobjective parameter estimation using technique proposed by Nepomuceno et. al.
