@@ -330,6 +330,42 @@ class AILS:
             return [y] + [static_gain]
 
         return [y] + [static_gain] + [static_function]
+    
+    def build_affine_data(self, psi, HR, QR):
+        """
+        Construct a list of affine data components for NARMAX modeling.
+
+        Parameters
+        ----------
+        psi : ndarray of floats, shape (n_samples, n_parameters)
+            The matrix of dynamic regressors.
+        HR : ndarray of floats, shape (n_samples_static_gain, n_parameters)
+            The matrix of static gain regressors.
+        QR : ndarray of floats, shape (n_samples_static_function, n_parameters)
+            The matrix of static function regressors.
+
+        Returns
+        -------
+        affine_data : list of ndarrays
+            A list containing affine data components, including the matrix of static
+            regressors (psi), static gain regressors (if present), and static function
+            regressors (if present).
+
+        Notes
+        -----
+        This method constructs a list of affine data components used in the NARMAX
+        modeling process. The components may include the matrix of static regressors
+        (psi), static gain regressors (if enabled), and static function regressors
+        (if enabled).
+
+        """
+        if not self.static_gain:
+            return [psi] + [QR]
+
+        if not self.static_function:
+            return [psi] + [HR]
+
+        return [psi] + [HR] + [QR]
 
 
 class IM(FROLS):
