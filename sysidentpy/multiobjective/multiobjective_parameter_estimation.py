@@ -296,6 +296,40 @@ class AILS:
         """
         residuals = y - psi.dot(theta)
         return residuals.T.dot(residuals)
+    
+    def build_system_data(self, y, static_gain, static_function):
+        """
+        Construct a list of output data components for the NARMAX system.
+
+        Parameters
+        ----------
+        y : ndarray of floats
+            The target data used in the identification process.
+        static_gain : ndarray of floats
+            Static gain output data.
+        static_function : ndarray of floats
+            Static function output data.
+
+        Returns
+        -------
+        system_data : list of ndarrays
+            A list containing data components, including the target data (y),
+            static gain data (if present), and static function data (if present).
+
+        Notes
+        -----
+        This method constructs a list of data components that are used in the NARMAX
+        system identification process. The components may include the target data (y),
+        static gain data (if enabled), and static function data (if enabled).
+
+        """
+        if not self.static_gain:
+            return [y] + [static_function]
+
+        if not self.static_function:
+            return [y] + [static_gain]
+
+        return [y] + [static_gain] + [static_function]
 
 
 class IM(FROLS):
