@@ -236,6 +236,38 @@ class AILS:
         gain_response = (HR.T).dot(gain)
         return HR, gain_covariance, gain_response
 
+    def set_weights(self):
+        """
+        Set weights assigned to each objective in the multi-objective optimization.
+
+        Returns
+        -------
+        weights : ndarray of floats
+            An array containing the weights for each objective.
+
+        Notes
+        -----
+        This method calculates the weights to be assigned to different objectives in
+        multi-objective optimization. The choice of weights depends on the presence
+        of static function and static gain data. If both are present, a set of weights
+        for dynamic, gain, and static objectives is computed. If either static function
+        or static gain is absent, a simplified set of weights is generated.
+
+        """
+        w1 = np.logspace(-0.01, -5, num=50, base=2.71)
+        if self.static_function is False or self.static_gain is False:
+            w2 = 1 - w1
+            return np.vstack([w1, w2])
+
+        w2 = w1[::-1]
+        w1_grid, w2_grid = np.meshgrid(w1, w2)
+        w3_grid = 1 - (w1_grid + w2_grid)
+        mask = w1_grid + w2_grid <= 1
+        dynamic_weight = np.flip(w1_grid[mask])
+        gain_weight = np.flip(w2_grid[mask])
+        static_weight = np.flip(w3_grid[mask])
+        return np.vstack([dynamic_weight, gain_weight, static_weight])
+
 
 class IM(FROLS):
     """Multiobjective parameter estimation using technique proposed by Nepomuceno et. al.
