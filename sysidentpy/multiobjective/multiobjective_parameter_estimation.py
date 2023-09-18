@@ -5,6 +5,49 @@ from sysidentpy.model_structure_selection import FROLS
 from sysidentpy.narmax_base import RegressorDictionary
 
 
+class AILS:
+    """Affine Information Least Squares (AILS) for NARMAX Parameter Estimation.
+
+    AILS is a non-iterative multiobjective Least Squares technique used for finding
+    Pareto-set solutions in NARMAX (Nonlinear AutoRegressive Moving Average with
+    eXogenous inputs) model parameter estimation. This method is suitable for
+    linear-in-the-parameter model structures.
+
+    Two types of auxiliary information can be incorporated: static function and
+    steady-state gain.
+
+    Parameters
+    ----------
+    static_gain : bool, default=True
+        Flag indicating the presence of data related to steady-state gain.
+    static_function : bool, default=True
+        Flag indicating the presence of data concerning static function.
+    final_model : ndarray, default=[[0], [0]]
+        Model code representation.
+
+    References
+    ----------
+    1. Nepomuceno, E. G., Takahashi, R. H. C., & Aguirre, L. A. (2007).
+    "Multiobjective parameter estimation for nonlinear systems: Affine information and
+    least-squares formulation."
+    International Journal of Control, 80, 863-871.
+    """
+
+    def __init__(
+        self,
+        static_gain=True,
+        static_function=True,
+        final_model=np.zeros((1, 1)),
+        normalize=True,
+    ):
+        self.n_inputs = np.max(final_model // 1000) - 1
+        self.degree = np.shape(final_model)[1]
+        self.final_model = final_model
+        self.static_gain = static_gain
+        self.static_function = static_function
+        self.normalize = normalize
+
+
 class IM(FROLS):
     """Multiobjective parameter estimation using technique proposed by Nepomuceno et. al.
 
