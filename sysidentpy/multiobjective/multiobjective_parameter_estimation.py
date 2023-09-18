@@ -136,6 +136,48 @@ class AILS:
         R = np.delete(R, null_rows, axis=0)
         qit = np.delete(qit, null_rows, axis=0)
         return R, self.get_term_clustering(qit)
+    
+    def build_static_function_information(self, x_static, y_static):
+        """
+        Construct a matrix of static regressors for a NARMAX model.
+
+        Parameters
+        ----------
+        y_static : array-like, shape (n_samples_static_function,)
+            Output of the static function.
+        x_static : array-like, shape (n_samples_static_function,)
+            Static function input.
+
+        Returns
+        -------
+        Q_dot_R : ndarray of floats, shape (n_samples_static_function, n_parameters)
+            The result of multiplying the matrix of static regressors (Q) with the
+            linear mapping matrix (R), where n_parameters is the number of model
+            parameters.
+        static_covariance: ndarray of floats, shape (n_parameters, n_parameters)
+            The covariance QR'QR
+        static_response: ndarray of floats, shape (n_parameters,)
+            The response QR'y
+
+        Notes
+        -----
+        This function constructs a matrix of static regressors (Q) based on the provided
+        static function outputs (y_static) and inputs (x_static). The linear mapping
+        matrix (R) should be precomputed before calling this function. The result
+        Q_dot_R represents the static regressors for the NARMAX model.
+
+        """
+        R, qit = self.build_linear_mapping()
+        Q = y_static ** qit[:, 0]
+        for k in range(self.n_inputs):
+            Q *= x_static ** qit[:, 1 + k]
+
+        Q = Q.reshape(len(y_static), len(qit))
+
+        QR = Q.dot(R)
+        static_covariance = (QR.T).dot(QR)
+        static_response = (QR.T).dot(y_static)
+        return QR, static_covariance, static_response
 
 
 class IM(FROLS):
