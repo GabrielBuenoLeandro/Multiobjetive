@@ -267,6 +267,35 @@ class AILS:
         gain_weight = np.flip(w2_grid[mask])
         static_weight = np.flip(w3_grid[mask])
         return np.vstack([dynamic_weight, gain_weight, static_weight])
+    
+    def get_cost_function(self, y, psi, theta):
+        """
+        Calculate the cost function based on residuals.
+
+        Parameters
+        ----------
+        y : ndarray of floats
+            The target data used in the identification process.
+        psi : ndarray of floats, shape (n_samples, n_parameters)
+            The matrix of regressors.
+        theta : ndarray of floats
+            The parameter vector.
+
+        Returns
+        -------
+        cost_function : float
+            The calculated cost function value.
+
+        Notes
+        -----
+        This method computes the cost function value based on the residuals between
+        the target data (y) and the predicted values using the regressors (dynamic
+        and static) and parameter vector (theta). It quantifies the error in the
+        model's predictions.
+
+        """
+        residuals = y - psi.dot(theta)
+        return residuals.T.dot(residuals)
 
 
 class IM(FROLS):
