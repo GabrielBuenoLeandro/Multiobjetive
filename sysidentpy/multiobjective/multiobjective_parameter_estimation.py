@@ -47,6 +47,54 @@ class AILS:
         self.static_function = static_function
         self.normalize = normalize
 
+    def get_term_clustering(self, qit):
+        """
+        Get the term clustering of the model.
+
+        This function takes a matrix `qit` and compute the term clustering based
+        on their values. It calculates the number of occurrences of each value
+        for each row in the matrix.
+
+        Parameters
+        ----------
+        qit : ndarray
+            Input matrix containing terms clustering to be sorted.
+
+        Returns
+        -------
+        N_aux : ndarray
+            A new matrix with rows representing the number of occurrences of each value
+            for each row in the input matrix `qit`. The columns correspond to different
+            values.
+
+        Examples
+        --------
+        >>> qit = np.array([[1, 2, 2],
+        ...                 [1, 3, 1],
+        ...                 [2, 2, 3]])
+        >>> sorter = Sorter()
+        >>> result = sorter.get_term_clustering(qit)
+        >>> print(result)
+        [[1. 2. 0. 0.]
+        [2. 0. 1. 0.]
+        [0. 2. 1. 0.]]
+
+        Notes
+        -----
+        The function calculates the number of occurrences of each value (from 1 to
+        the maximum value in the input matrix `qit`) for each row and returns a matrix
+        where rows represent rows of the input matrix `qit`, and columns represent
+        different values.
+
+        """
+        max_value = int(np.max(qit))
+        counts_matrix = np.zeros((qit.shape[0], max_value))
+
+        for k in range(1, max_value + 1):
+            counts_matrix[:, k - 1] = np.sum(qit == k, axis=1)
+
+        return counts_matrix
+
 
 class IM(FROLS):
     """Multiobjective parameter estimation using technique proposed by Nepomuceno et. al.
