@@ -1,9 +1,8 @@
+""" Affine Information Least Squares for NARMAX models"""
+
 import numpy as np
 from sysidentpy.model_structure_selection import FROLS
-from sysidentpy.basis_function import Polynomial
 from sysidentpy.narmax_base import RegressorDictionary
-
-# from sysidentpy import basis_function
 
 
 class IM(FROLS):
