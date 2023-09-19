@@ -71,8 +71,7 @@ class AILS:
         >>> qit = np.array([[1, 2, 2],
         ...                 [1, 3, 1],
         ...                 [2, 2, 3]])
-        >>> sorter = Sorter()
-        >>> result = sorter.get_term_clustering(qit)
+        >>> result = get_term_clustering(qit)
         >>> print(result)
         [[1. 2. 0. 0.]
         [2. 0. 1. 0.]
