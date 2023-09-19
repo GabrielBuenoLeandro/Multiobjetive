@@ -1,21 +1,25 @@
+""" Basis Function for NARMAX models """
+
 from itertools import combinations_with_replacement
+from typing import Union
 
 import numpy as np
 
-from sysidentpy.narmax_base import InformationMatrix
+from .basis_function_base import BaseBasisFunction
 
 
-class Polynomial(InformationMatrix):
-    """Build polynomial basis function.
+class Polynomial(BaseBasisFunction):
+    r"""Build polynomial basis function.
     Generate a new feature matrix consisting of all polynomial combinations
     of the features with degree less than or equal to the specified degree.
 
-    ..math:
-        y_k = \sum_{i=1}^{p}\Theta_i \times \prod_{j=0}^{n_x}u_{k-j}^{b_i, j}\prod_{l=1}^{n_e}e_{k-l}^{d_i, l}\prod_{m=1}^{n_y}y_{k-m}^{a_i, m}
-        \label{eq5:narx}
+    $$
+        y_k = \sum_{i=1}^{p}\Theta_i \times \prod_{j=0}^{n_x}u_{k-j}^{b_i, j}
+        \prod_{l=1}^{n_e}e_{k-l}^{d_i, l}\prod_{m=1}^{n_y}y_{k-m}^{a_i, m}
+    $$
 
-    where :math:`p` is the number of regressors, :math:`\Theta_i` are the
-    model parameters, and :math:`a_i, m, b_i, j` and :math:`d_i, l \in \mathbb{N}`
+    where $p$ is the number of regressors, $\Theta_i$ are the
+    model parameters, and $a_i, m, b_i, j$ and $d_i, l \in \mathbb{N}$
     are the exponents of the output, input and noise terms, respectively.
 
     Parameters
@@ -37,7 +41,12 @@ class Polynomial(InformationMatrix):
     ):
         self.degree = degree
 
-    def fit(self, data, max_lag, predefined_regressors=None):
+    def fit(
+        self,
+        data: np.ndarray,
+        max_lag: int = 1,
+        predefined_regressors: Union[np.ndarray, None] = None,
+    ):
         """Build the Polynomial information matrix.
 
         Each columns of the information matrix represents a candidate
@@ -75,7 +84,12 @@ class Polynomial(InformationMatrix):
         psi = psi[max_lag:, :]
         return psi
 
-    def transform(self, data, max_lag, predefined_regressors=None):
+    def transform(
+        self,
+        data: np.ndarray,
+        max_lag: int = 1,
+        predefined_regressors: Union[np.ndarray, None] = None,
+    ):
         return self.fit(data, max_lag, predefined_regressors)
 
 
@@ -101,6 +115,7 @@ class Fourier:
         self.p = p
         self.degree = degree
         self.ensemble = ensemble
+        self.repetition = None
 
     def _fourier_expansion(self, data, n):
         base = np.column_stack(
@@ -111,7 +126,12 @@ class Fourier:
         )
         return base
 
-    def fit(self, data, max_lag, predefined_regressors=None):
+    def fit(
+        self,
+        data: np.ndarray,
+        max_lag: int = 1,
+        predefined_regressors: Union[np.ndarray, None] = None,
+    ):
         """Build the Polynomial information matrix.
 
         Each columns of the information matrix represents a candidate
@@ -153,7 +173,6 @@ class Fourier:
 
         self.repetition = self.n * 2
         if self.ensemble:
-
             psi = psi[:, 1:]
             psi = np.column_stack([data, psi])
         else:
@@ -161,8 +180,13 @@ class Fourier:
 
         if predefined_regressors is None:
             return psi, self.ensemble
-        else:
-            return psi[:, predefined_regressors], self.ensemble
 
-    def transform(self, data, max_lag, predefined_regressors=None):
+        return psi[:, predefined_regressors], self.ensemble
+
+    def transform(
+        self,
+        data: np.ndarray,
+        max_lag: int = 1,
+        predefined_regressors: Union[np.ndarray, None] = None,
+    ):
         return self.fit(data, max_lag, predefined_regressors)

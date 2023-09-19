@@ -284,3 +284,35 @@ If you use SysIdentPy on your scientific publication, we would appreciate citati
 ## Inspiration
 
 The documentation and structure (even this section) is openly inspired by sklearn, einsteinpy, and many others as we used (and keep using) them to learn.
+
+## Contributors
+
+<a href="https://github.com/wilsonrljr/sysidentpy/graphs/contributors">
+  <img src="https://contributors-img.web.app/image?repo=wilsonrljr/sysidentpy" width = 500/>
+</a>
+
+
+## Sponsors
+<!-- sponsors -->
+**Special thanks** to our **sponsors**
+
+<hr />
+
+
+### Gold Sponsors
+
+<a href="https://github.com/ml-technium">
+    <img alt="Technium" src="https://avatars.githubusercontent.com/u/83768197?v=4" width="90" height="90">
+</a>
+
+### Individual Sponsors
+
+<a href="https://github.com/nataliakeles">
+    <img alt="Nath Keles" src="https://avatars.githubusercontent.com/u/61664158?v=4" width="90" height="90">
+</a>
+
+<hr />
+
+  [wilsonrljr's sponsor profile]: https://github.com/sponsors/wilsonrljr
+
+<!-- sponsors -->
